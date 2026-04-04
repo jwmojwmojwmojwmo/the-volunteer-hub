@@ -1,3 +1,8 @@
+# package
+package-lock.json
+package-lock.yaml
+yarn.lock
+
 # dependencies
 /node_modules
 
@@ -22,10 +27,11 @@ pnpm-debug.log*
 .env*.local
 .env
 
+# typescript
+*.tsbuildinfo
+
 # vscode
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# package-lock
-package-lock.json

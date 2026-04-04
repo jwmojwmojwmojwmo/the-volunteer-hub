@@ -1,30 +1,29 @@
-// src/lib/supabase/server.ts
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
-// Make this function async
 export async function createClient() {
-  // Await the cookies here!
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
+  const { url, publishableKey } = getSupabaseEnv();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!,
+    url,
+    publishableKey,
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch (error) {
-            // Ignored for Server Components
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Intentionally ignored in Server Components where setting cookies can throw.
           }
-        },
-      },
+        }
+      }
     }
-  )
+  );
 }
