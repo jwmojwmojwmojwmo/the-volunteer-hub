@@ -10,6 +10,10 @@ type EventQueryRow = Omit<EventCard, "tags"> & {
   event_tags?: { tags?: { name: string | null } | null }[] | null;
 };
 
+function normalizeStatus(value: unknown) {
+  return String(value ?? "").toLowerCase();
+}
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -107,12 +111,14 @@ export default async function Home() {
 
   const rawEvents = (eventsData ?? []) as EventQueryRow[];
   const formattedEvents: EventCard[] = rawEvents.map((event) => {
-    const tags = (event.event_tags ?? [])
+    const eventTags = Array.isArray(event.event_tags) ? event.event_tags : [];
+    const tags = eventTags
       .map((eventTag) => eventTag.tags?.name)
       .filter((tag): tag is string => Boolean(tag));
 
     return {
       ...event,
+      status: String(event.status ?? "unknown"),
       tags
     };
   });
@@ -141,7 +147,7 @@ export default async function Home() {
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <VolunteerEventBrowser
-            events={formattedEvents.filter((event) => event.status.toLowerCase() !== "completed")}
+            events={formattedEvents.filter((event) => normalizeStatus(event.status) !== "completed")}
             isSignedIn={Boolean(user)}
             profile={profile}
             applicationStatusByEvent={applicationStatusByEvent}

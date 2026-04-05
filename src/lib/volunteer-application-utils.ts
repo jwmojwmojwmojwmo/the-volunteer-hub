@@ -8,6 +8,10 @@ export type VolunteerApplicationEventMeta = {
 
 export type VolunteerApplicationEventMetaInput = Pick<EventCard, "id" | "title" | "status" | "hours_given">;
 
+function normalizeStatus(value: unknown) {
+  return String(value ?? "").toLowerCase();
+}
+
 export function buildEventMetaById(events: VolunteerApplicationEventMetaInput[]) {
   return new Map(
     events.map((event) => [
@@ -44,12 +48,12 @@ export function normalizeVolunteerApplications(
 
 export function splitVolunteerApplicationsByEventStatus(applications: VolunteerApplication[]) {
   const currentApplications = applications.filter((application) => {
-    const eventStatus = application.events?.[0]?.status?.toLowerCase();
+    const eventStatus = normalizeStatus(application.events?.[0]?.status);
     return eventStatus !== "completed";
   });
 
   const pastApplications = applications.filter((application) => {
-    const eventStatus = application.events?.[0]?.status?.toLowerCase();
+    const eventStatus = normalizeStatus(application.events?.[0]?.status);
     return eventStatus === "completed";
   });
 
