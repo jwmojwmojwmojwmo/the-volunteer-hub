@@ -22,7 +22,7 @@ export default function VolunteerEventGrid({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {events.length === 0 ? (
-        <p className="rounded-[1.5rem] border border-white/60 bg-white/60 p-6 text-sm text-slate-600">
+        <p className="rounded-[1.5rem] border border-white/60 bg-white/60 p-6 text-sm leading-6 text-slate-600">
           No events found matching your criteria.
         </p>
       ) : (
@@ -50,7 +50,7 @@ export default function VolunteerEventGrid({
               onClick={() => onSelectEvent?.(event.id)}
               onFocus={() => onSelectEvent?.(event.id)}
               className={cn(
-                "group relative flex flex-col overflow-hidden rounded-[1.5rem] border p-5 shadow-[0_18px_40px_rgba(20,33,46,0.08)] transition duration-300",
+                "group relative flex flex-col overflow-hidden rounded-[1.6rem] border p-5 shadow-[0_18px_40px_rgba(20,33,46,0.08)] transition duration-300",
                 activeEventId === event.id ? "border-slate-900 bg-white" : "border-white/60 bg-white/82 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(20,33,46,0.12)]"
               )}
               onMouseEnter={() => onSelectEvent?.(event.id)}
@@ -65,7 +65,7 @@ export default function VolunteerEventGrid({
                     "Independent"
                   )}
                 </p>
-                <span className={cn("stamp-pill rounded-full px-3 py-1 text-xs font-semibold", isFull && "border-rose-200 bg-rose-50 text-rose-900") }>
+                <span className={cn("stamp-pill rounded-[1rem] px-3 py-1.5 text-xs font-semibold", isFull && "border-rose-200 bg-rose-50 text-rose-900") }>
                   {event.hours_given} hrs
                 </span>
               </div>
@@ -86,7 +86,7 @@ export default function VolunteerEventGrid({
                 {event.tags && event.tags.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {event.tags.map((tag) => (
-                      <span key={tag} className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                      <span key={tag} className="rounded-[1rem] border border-slate-200 bg-white/80 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700">
                         {tag}
                       </span>
                     ))}
@@ -96,7 +96,7 @@ export default function VolunteerEventGrid({
                 <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">{event.description}</p>
                 <p className="mt-4 text-sm text-slate-600">Where: {event.address || "Address not specified"}</p>
 
-                <Link href={`/events/${event.id}`} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline decoration-2 underline-offset-4">
+                  <Link href={`/events/${event.id}`} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline decoration-2 underline-offset-4">
                   View full event details
                 </Link>
               </div>

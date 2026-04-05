@@ -15,7 +15,7 @@
   --accent-strong: #08444c;
   --accent-warm: #c45c2d;
   --accent-soft: #dcefe5;
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
 html {
@@ -32,6 +32,33 @@ body {
     linear-gradient(135deg, #f7f2e9 0%, #fbfbf8 40%, #eef5f6 100%);
   position: relative;
   overflow-x: hidden;
+}
+
+.dark {
+  --background: #0b1118;
+  --foreground: #f4f8fc;
+  --muted: #b8c3cf;
+  --panel: rgba(15, 23, 34, 0.9);
+  --panel-strong: rgba(8, 14, 23, 0.95);
+  --border: rgba(100, 116, 139, 0.38);
+  --accent: #7de0da;
+  --accent-strong: #2bb0ab;
+  --accent-warm: #e9a36b;
+  --accent-soft: rgba(125, 224, 218, 0.14);
+  color-scheme: dark;
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.dark body::before {
+  opacity: 0;
+}
+
+.dark body::after {
+  background: transparent;
 }
 
 body::before {
@@ -68,6 +95,7 @@ body::after {
 .display-font {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
   letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
 .body-font {
@@ -115,6 +143,40 @@ body::after {
   border: 1px solid rgba(20, 33, 46, 0.16);
 }
 
+.dark {
+  color: var(--foreground);
+}
+
+.dark .paper-panel {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.dark .paper-panel-strong {
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.3);
+}
+
+.dark .input-shell {
+  background: rgba(12, 20, 31, 0.9);
+  border-color: rgba(125, 224, 218, 0.24);
+  color: var(--foreground);
+}
+
+.dark .input-shell::placeholder {
+  color: rgba(190, 200, 212, 0.95);
+}
+
+.dark .secondary-action {
+  background: rgba(17, 29, 40, 0.92);
+  color: var(--foreground);
+  border-color: rgba(125, 224, 218, 0.28);
+}
+
+.dark .stamp-pill {
+  background: rgba(17, 29, 40, 0.88);
+  border-color: rgba(125, 224, 218, 0.24);
+  color: var(--foreground);
+}
+
 .input-shell {
   @apply w-full rounded-2xl border px-4 py-3 text-sm transition;
   border-color: var(--border);
@@ -135,6 +197,19 @@ body::after {
 .map-shell .leaflet-container {
   background: linear-gradient(135deg, #bfe3f0 0%, #8fd1e0 48%, #d8efe6 100%);
   border-radius: 1.5rem;
+}
+
+.dark .map-shell .leaflet-container {
+  background: #101a26;
+}
+
+.dark .map-shell .leaflet-tile {
+  filter: brightness(0.72) contrast(1.05) saturate(0.82);
+}
+
+.dark .map-shell .leaflet-control-zoom,
+.dark .map-shell .leaflet-control-attribution {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
 .map-shell .leaflet-control-zoom,
@@ -165,4 +240,64 @@ body::after {
     radial-gradient(circle at 18% 22%, rgba(11, 93, 102, 0.18), transparent 16%),
     radial-gradient(circle at 84% 20%, rgba(196, 92, 45, 0.16), transparent 18%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(245, 239, 227, 0.92));
+}
+
+.dark [class*="bg-white"] {
+  background-color: rgba(15, 23, 34, 0.88) !important;
+}
+
+.dark [class*="bg-slate-50"] {
+  background-color: rgba(15, 23, 34, 0.78) !important;
+}
+
+.dark [class*="bg-slate-100"] {
+  background-color: rgba(30, 41, 59, 0.82) !important;
+}
+
+.dark [class*="border-slate-200"],
+.dark [class*="border-white"] {
+  border-color: rgba(100, 116, 139, 0.24) !important;
+}
+
+.dark [class*="text-slate-900"],
+.dark [class*="text-gray-900"] {
+  color: #f8fafc !important;
+}
+
+.dark [class*="text-slate-800"] {
+  color: #e2e8f0 !important;
+}
+
+.dark [class*="text-slate-700"],
+.dark [class*="text-slate-600"],
+.dark [class*="text-gray-600"],
+.dark [class*="text-slate-500"] {
+  color: #e5edf6 !important;
+}
+
+.dark [class*="text-slate-500"] {
+  color: #d3deea !important;
+}
+
+html:not(.dark) [class*="text-slate-900"],
+html:not(.dark) [class*="text-gray-900"] {
+  color: #0f172a !important;
+}
+
+html:not(.dark) [class*="text-slate-800"],
+html:not(.dark) [class*="text-slate-700"],
+html:not(.dark) [class*="text-slate-600"],
+html:not(.dark) [class*="text-gray-600"],
+html:not(.dark) [class*="text-slate-500"] {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .input-shell {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(20, 33, 46, 0.28);
+  color: #0f172a;
+}
+
+html:not(.dark) .input-shell::placeholder {
+  color: #475569;
 }

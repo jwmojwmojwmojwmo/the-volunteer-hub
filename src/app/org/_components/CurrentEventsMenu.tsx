@@ -14,14 +14,14 @@ type CurrentEventsMenuProps = {
 export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }: CurrentEventsMenuProps) {
   return (
     <details className="relative">
-      <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
+      <summary className="stamp-pill cursor-pointer list-none rounded-[1rem] px-4 py-2.5 text-sm font-semibold shadow-[0_10px_20px_rgba(20,33,46,0.08)]">
         Current events
       </summary>
-      <div className="paper-panel absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.35rem] p-4">
+      <div className="paper-panel-strong absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.5rem] p-4 sm:p-5">
         {currentEvents.length > 0 ? (
           <div className="space-y-2">
             {currentEvents.map((event) => (
-              <div key={event.id} className="rounded-[1rem] border border-slate-200 bg-white/80 px-3 py-2 text-xs">
+              <div key={event.id} className="rounded-[1.1rem] border border-slate-200 bg-white/80 px-3 py-3 text-xs">
                 {(() => {
                   const approvedCount = (event.event_applications ?? []).filter(
                     (application) => application.status === APPLICATION_STATUSES.ACCEPTED
@@ -47,7 +47,7 @@ export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }
                       const isPendingReview = isPendingOrgReviewStatus(application.status);
 
                       return (
-                        <div key={application.id} className="rounded-[1rem] border border-slate-200 bg-white/80 p-2">
+                        <div key={application.id} className="rounded-[1.1rem] border border-slate-200 bg-white/80 p-3">
                           <p className="font-semibold text-slate-800">{volunteer?.name || "Volunteer"}</p>
                           <p className="text-slate-600">{volunteer?.contact_email || "No email"}</p>
                           <p className="text-slate-600">Application status: {getApplicationStatusLabel(application.status)}</p>
@@ -63,7 +63,7 @@ export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }
                             </p>
                           ) : null}
 
-                          <details className="mt-2 rounded-[1rem] border border-slate-200 bg-slate-50 p-2">
+                          <details className="mt-2 rounded-[1.1rem] border border-slate-200 bg-slate-50 p-3">
                             <summary className="cursor-pointer font-semibold text-slate-800">Volunteer profile</summary>
                             <div className="mt-2 space-y-1 text-slate-600">
                               <p>Completed hours: {volunteer?.completed_hours ?? 0}</p>
@@ -74,7 +74,7 @@ export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }
                                 {volunteerSkills.length > 0 ? (
                                   <div className="mt-1 flex flex-wrap gap-1">
                                     {volunteerSkills.map((skill) => (
-                                      <span key={`${application.id}-${skill}`} className="stamp-pill rounded px-1.5 py-0.5 text-[11px] text-slate-700">
+                                        <span key={`${application.id}-${skill}`} className="stamp-pill rounded-[0.85rem] px-2 py-1 text-[11px] text-slate-700">
                                         {skill}
                                       </span>
                                     ))}
@@ -93,7 +93,7 @@ export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }
                                 <button
                                   type="submit"
                                   aria-label={`Approve ${volunteer?.name || "volunteer"} for ${event.title}`}
-                                  className="rounded-full primary-action px-2 py-1 text-[11px] font-semibold"
+                                  className="rounded-[0.9rem] primary-action px-2.5 py-1.5 text-[11px] font-semibold"
                                 >
                                   Accept
                                 </button>
@@ -103,7 +103,7 @@ export default function CurrentEventsMenu({ currentEvents, applicationsByEvent }
                                 <button
                                   type="submit"
                                   aria-label={`Decline ${volunteer?.name || "volunteer"} for ${event.title}`}
-                                  className="rounded-full secondary-action px-2 py-1 text-[11px] font-semibold"
+                                  className="rounded-[0.9rem] secondary-action px-2.5 py-1.5 text-[11px] font-semibold"
                                 >
                                   Decline
                                 </button>

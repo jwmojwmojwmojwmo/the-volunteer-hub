@@ -76,12 +76,41 @@ function CenterMapOnCurrentLocation({
   return null;
 }
 
-function buildMarkerIcon(index: number, isActive: boolean) {
+function FocusMapOnActiveEvent({
+  activeEventId,
+  events
+}: {
+  activeEventId?: string | null;
+  events: EventCard[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!activeEventId) {
+      return;
+    }
+
+    const activeEvent = events.find((event) => event.id === activeEventId);
+    if (!activeEvent || !Number.isFinite(activeEvent.lat) || !Number.isFinite(activeEvent.lng)) {
+      return;
+    }
+
+    map.whenReady(() => {
+      map.setView([activeEvent.lat as number, activeEvent.lng as number], Math.max(map.getZoom(), 13), {
+        animate: false
+      });
+    });
+  }, [activeEventId, events, map]);
+
+  return null;
+}
+
+function buildMarkerIcon(hoursGiven: number, isActive: boolean) {
   return divIcon({
     className: "",
     html: `
       <div class="map-marker ${isActive ? "map-marker--active" : ""}" style="background:${isActive ? "#08444c" : "#0b5d66"}">
-        ${index + 1}
+        ${hoursGiven}
       </div>
     `,
     iconAnchor: [17, 17],
@@ -115,16 +144,16 @@ export default function VolunteerOpportunityMap({
   return (
     <div className={`relative ${className ?? ""}`}>
       <div className="absolute left-16 top-4 z-[500] flex flex-wrap gap-2">
-        <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+        <span className="rounded-full border border-slate-700 bg-slate-900/88 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow-sm">
           {eventsWithLocation.length > 0 ? `${eventsWithLocation.length} mapped` : "No mapped events"}
         </span>
         {locationStatus === "denied" ? (
-          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-sm">
+          <span className="rounded-full border border-amber-900/60 bg-amber-950/55 px-3 py-1.5 text-xs font-semibold text-amber-200 shadow-sm">
             Location blocked. Showing default area.
           </span>
         ) : null}
         {locationStatus === "unsupported" ? (
-          <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+          <span className="rounded-full border border-slate-700 bg-slate-900/88 px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-sm">
             Location unavailable in this browser.
           </span>
         ) : null}
@@ -137,10 +166,11 @@ export default function VolunteerOpportunityMap({
             onLocationChange={onUserLocationChange}
             locationRequestKey={locationRequestKey}
           />
+          <FocusMapOnActiveEvent activeEventId={activeEventId} events={eventsWithLocation} />
 
           <TileLayer
-            attribution='&copy; OpenStreetMap contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
 
           {userLocation ? (
@@ -172,7 +202,7 @@ export default function VolunteerOpportunityMap({
               <Marker
                 key={event.id}
                 position={[event.lat ?? DEFAULT_CENTER[0], event.lng ?? DEFAULT_CENTER[1]]}
-                icon={buildMarkerIcon(index, isActive)}
+                icon={buildMarkerIcon(event.hours_given, isActive)}
                 eventHandlers={{
                   click: () => onSelectEvent?.(event.id)
                 }}
@@ -183,7 +213,7 @@ export default function VolunteerOpportunityMap({
       </div>
 
       {events.length === 0 ? (
-        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-200 bg-white/92 px-4 py-3 text-sm font-semibold text-slate-700 shadow-md">
+        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-700 bg-slate-900/92 px-4 py-3 text-sm font-semibold text-slate-100 shadow-md">
           No events yet. The map is still ready and centered to your location when permission is allowed.
         </div>
       ) : null}

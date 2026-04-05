@@ -21,7 +21,7 @@ export default function HostedEventsList({ allEvents }: HostedEventsListProps) {
               ).length;
 
               return (
-                <div key={event.id} className="rounded-[1.35rem] border border-slate-200 bg-white/80 p-4 text-sm shadow-[0_12px_28px_rgba(20,33,46,0.06)]">
+                <div key={event.id} className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4 text-sm shadow-[0_12px_28px_rgba(20,33,46,0.06)]">
                   <p className="display-font text-xl font-semibold text-slate-900">{event.title}</p>
                   <p className="text-slate-600">Address: {event.address || "Not specified"}</p>
                   <p className="text-slate-600">Status: {event.status}</p>
@@ -30,7 +30,7 @@ export default function HostedEventsList({ allEvents }: HostedEventsListProps) {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href={`/org/events/${event.id}`}
-                      className="rounded-full secondary-action px-3 py-2 text-xs font-semibold"
+                      className="rounded-[1rem] secondary-action px-3 py-2.5 text-xs font-semibold"
                     >
                       Manage event
                     </Link>
@@ -40,7 +40,7 @@ export default function HostedEventsList({ allEvents }: HostedEventsListProps) {
                         <input type="hidden" name="eventId" value={event.id} />
                         <button
                           type="submit"
-                          className="rounded-full secondary-action px-3 py-2 text-xs font-semibold"
+                          className="rounded-[1rem] secondary-action px-3 py-2.5 text-xs font-semibold"
                         >
                           Remove from dashboard
                         </button>

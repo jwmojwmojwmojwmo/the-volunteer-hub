@@ -1,8 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { APPLICATION_STATUSES } from "@/lib/application-status";
+import { applyToEvent } from "@/app/volunteer/actions";
+import { APPLICATION_STATUSES, getApplicationStatusLabel } from "@/lib/application-status";
+import { STAMP_LABELS } from "@/lib/stamps";
 import { cn } from "@/lib/utils";
 import type { EventCard, VolunteerProfile } from "@/types/volunteer";
 import type { VolunteerMapLocationStatus } from "./VolunteerOpportunityMap";
@@ -23,6 +26,7 @@ type VolunteerEventBrowserProps = {
   isSignedIn: boolean;
   profile: VolunteerProfile | null;
   applicationStatusByEvent: Map<string, string>;
+  userEmail?: string;
 };
 
 type Coordinates = { lat: number; lng: number };
@@ -80,9 +84,13 @@ function getCompensationLabel(event: EventCard) {
   return "No listed perks";
 }
 
-export default function VolunteerEventBrowser({ events, isSignedIn, profile, applicationStatusByEvent }: VolunteerEventBrowserProps) {
+function getSkillLabel(skill: string) {
+  return STAMP_LABELS[skill as keyof typeof STAMP_LABELS] || skill;
+}
+
+export default function VolunteerEventBrowser({ events, isSignedIn, profile, applicationStatusByEvent, userEmail }: VolunteerEventBrowserProps) {
   const [keyword, setKeyword] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("recommended");
   const [radiusKm, setRadiusKm] = useState(25);
   const [isRadiusFilterEnabled, setIsRadiusFilterEnabled] = useState(false);
@@ -92,15 +100,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
 
-  const allAvailableTags = useMemo(() => {
-    const tags = new Set<string>();
-    events.forEach((event) => event.tags.forEach((tag) => tags.add(tag)));
-    return Array.from(tags).sort();
-  }, [events]);
-
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((currentTag) => currentTag !== tag) : [...prev, tag]));
-  };
+  const loggedInIdentity = profile?.name || userEmail || "Volunteer account";
 
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(e.target.value);
@@ -122,8 +122,6 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
       const matchesKeyword = normalizedKeyword.length === 0
         || searchableFields.some((field) => field.includes(normalizedKeyword));
 
-      const matchesTags = selectedTags.length === 0 || selectedTags.every((tag) => event.tags.includes(tag));
-
       const hasCoordinates = Number.isFinite(event.lat) && Number.isFinite(event.lng);
       const eventDistance = userLocation && hasCoordinates
         ? getDistanceInKm(userLocation, { lat: event.lat as number, lng: event.lng as number })
@@ -132,7 +130,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
         ? true
         : Boolean(userLocation && eventDistance !== null && eventDistance <= radiusKm);
 
-      return matchesKeyword && matchesTags && matchesRadius;
+      return matchesKeyword && matchesRadius;
     });
 
     switch (sortOption) {
@@ -168,9 +166,11 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
           return a.title.localeCompare(b.title);
         });
     }
-  }, [events, keyword, selectedTags, sortOption, profile, isRadiusFilterEnabled, radiusKm, userLocation]);
+  }, [events, keyword, sortOption, profile, isRadiusFilterEnabled, radiusKm, userLocation]);
 
   const visibleMapEvents = filteredEvents;
+  const searchResults = useMemo(() => filteredEvents.slice(0, 8), [filteredEvents]);
+  const shouldShowSearchResults = isSearchFocused || keyword.trim().length > 0;
 
   useEffect(() => {
     if (filteredEvents.length === 0) {
@@ -190,6 +190,41 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   const activeEventApplicationStatus = activeEvent ? applicationStatusByEvent.get(activeEvent.id) ?? null : null;
   const activeEventPerks = activeEvent?.compensation ?? [];
   const activeCompensationLabel = activeEvent ? getCompensationLabel(activeEvent) : "No listed perks";
+  const profileSkillSet = new Set((profile?.skills ?? []).map((skill) => skill.toLowerCase()));
+  const missingRequiredSkills = activeEvent
+    ? (activeEvent.skills_needed ?? []).filter((skill) => !profileSkillSet.has(skill.toLowerCase()))
+    : [];
+  const activeEventAcceptedCount = activeEvent
+    ? (activeEvent.event_applications || []).filter((application) => application.status === APPLICATION_STATUSES.ACCEPTED).length
+    : 0;
+  const activeEventIsFull = activeEvent ? activeEventAcceptedCount >= activeEvent.max_volunteers : false;
+  const isActiveEventRecruiting = Boolean(activeEvent && activeEvent.status.toLowerCase() === "recruiting");
+  const canApplyToActiveEvent = Boolean(
+    activeEvent
+      && isSignedIn
+      && (!activeEventApplicationStatus || activeEventApplicationStatus === APPLICATION_STATUSES.WITHDRAWN)
+      && isActiveEventRecruiting
+      && missingRequiredSkills.length === 0
+  );
+  const activeEventApplyAction = activeEvent ? applyToEvent.bind(null, activeEvent.id) : null;
+  const activeEventApplyButtonLabel = activeEventApplicationStatus === APPLICATION_STATUSES.WITHDRAWN
+    ? "Apply again"
+    : activeEventApplicationStatus
+      ? getApplicationStatusLabel(activeEventApplicationStatus)
+      : activeEventIsFull
+        ? "Join waitlist"
+        : "Apply now";
+  const activeEventApplyBlockReason = !activeEvent
+    ? "Select an event to apply."
+    : !isSignedIn
+      ? "Sign in to apply."
+      : activeEventApplicationStatus && activeEventApplicationStatus !== APPLICATION_STATUSES.WITHDRAWN
+        ? `Application status: ${getApplicationStatusLabel(activeEventApplicationStatus)}.`
+        : !isActiveEventRecruiting
+          ? "Applications are closed for this event."
+          : missingRequiredSkills.length > 0
+            ? `Missing required skills: ${missingRequiredSkills.map((skill) => STAMP_LABELS[skill as keyof typeof STAMP_LABELS] || skill).join(", ")}.`
+            : null;
 
   const openDetailsForEvent = (eventId: string) => {
     setActiveEventId(eventId);
@@ -198,18 +233,17 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
 
   return (
     <div className="relative z-10 grid h-full min-h-0 gap-4 overflow-hidden lg:grid-cols-[380px_minmax(0,1fr)] xl:gap-6">
-      <aside className="paper-panel flex h-full min-h-0 flex-col overflow-hidden rounded-[1.75rem] p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
+      <aside className="paper-panel-strong flex h-full min-h-0 flex-col overflow-visible rounded-[1.75rem] p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-950/88">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
           <div className="min-w-0">
-            <p className="kicker">Volunteer</p>
-            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">&lt;insert site name&gt;</h3>
-            <p className="mt-2 text-xs text-slate-600">Choose a point on the map to load its details here.</p>
+            <p className="kicker">Logged in as</p>
+            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">{loggedInIdentity}</h3>
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Use search, filters, or the map to find opportunities.</p>
           </div>
           <button
             type="button"
             onClick={() => {
               setKeyword("");
-              setSelectedTags([]);
               setSortOption("recommended");
               setIsRadiusFilterEnabled(false);
               setRadiusKm(25);
@@ -221,23 +255,23 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Visible</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{filteredEvents.length}</p>
+          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Visible</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">{filteredEvents.length}</p>
           </div>
-          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Mapped</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{eventsWithCoordinates.length}</p>
+          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Mapped</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">{eventsWithCoordinates.length}</p>
           </div>
-          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Mode</p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">{getSortLabel(sortOption)}</p>
+          <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Mode</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">{getSortLabel(sortOption)}</p>
           </div>
         </div>
 
-        <div className="mt-4 space-y-4 overflow-hidden pr-1">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900" htmlFor="event-search">
+        <div className="mt-4 space-y-4 overflow-visible pr-1">
+          <div className="relative overflow-visible">
+            <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-50" htmlFor="event-search">
               Search
             </label>
             <input
@@ -245,34 +279,56 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               type="text"
               placeholder="Search titles, descriptions, orgs..."
               value={keyword}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
               onChange={handleKeywordChange}
               className="input-shell"
             />
-          </div>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">Search by title, description, tags, skills, address, or organization.</p>
 
-          <div>
-            <p className="mb-2 text-sm font-semibold text-slate-900">Tags</p>
-            <div className="flex flex-wrap gap-2">
-              {allAvailableTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => handleTagToggle(tag)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                    selectedTags.includes(tag)
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+            {shouldShowSearchResults ? (
+              <div className="mt-3 rounded-[1.2rem] border border-slate-200 bg-white p-3 shadow-[0_20px_50px_rgba(20,33,46,0.18)] dark:border-slate-700 dark:bg-slate-950/92">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2 dark:border-slate-700">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Search results</p>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">Sorted by {getSortLabel(sortOption)}</p>
+                </div>
+
+                <div className="mt-3 max-h-[18rem] space-y-2 overflow-y-auto pr-1">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onMouseDown={(mouseEvent) => {
+                          mouseEvent.preventDefault();
+                          openDetailsForEvent(event.id);
+                        }}
+                        onClick={() => openDetailsForEvent(event.id)}
+                        className={cn(
+                          "w-full rounded-[1rem] border px-3 py-2 text-left transition",
+                          event.id === activeEventId
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-200 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+                        )}
+                      >
+                        <p className="truncate text-sm font-semibold">{event.title}</p>
+                        <p className={cn("mt-1 truncate text-xs", event.id === activeEventId ? "text-slate-100" : "text-slate-500 dark:text-slate-300") }>
+                          {event.organizations?.name || "Independent"} • {event.hours_given}h
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+                      No matches for your search.
+                    </div>
                   )}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div>
-            <label htmlFor="sort-events" className="mb-2 block text-sm font-semibold text-slate-900">
+            <label htmlFor="sort-events" className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-50">
               Sort events
             </label>
             <select
@@ -287,11 +343,12 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               <option value="hours-desc">{getSortLabel("hours-desc")}</option>
               <option value="newest">{getSortLabel("newest")}</option>
             </select>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">The current sort order also drives the search suggestions and the event list below.</p>
           </div>
 
-          <div className="rounded-[1.1rem] border border-slate-200 bg-white/80 p-3">
+          <div className="rounded-[1.1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="radius-toggle" className="text-sm font-semibold text-slate-900">
+              <label htmlFor="radius-toggle" className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                 Radius filter
               </label>
               <input
@@ -304,7 +361,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
             </div>
 
             <div className="mt-3">
-              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <span>Search radius</span>
                 <span>{radiusKm} km</span>
               </div>
@@ -320,7 +377,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               />
             </div>
 
-            <p className="mt-2 text-xs text-slate-600">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               {userLocation
                 ? `Using your current location (${locationStatus === "granted" ? "detected" : "updated"}).`
                 : "Allow location access to filter nearby pins."}
@@ -329,23 +386,23 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
             <button
               type="button"
               onClick={() => setLocationRequestKey((previous) => previous + 1)}
-              className="mt-3 w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-500"
+              className="mt-3 w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-500 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-100 dark:hover:border-slate-500"
             >
               Enable location access
             </button>
           </div>
 
           {activeEvent ? (
-            <article className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 shadow-[0_16px_36px_rgba(20,33,46,0.08)]">
+            <article className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 shadow-[0_16px_36px_rgba(20,33,46,0.08)] dark:border-slate-700 dark:bg-slate-950/88">
               <p className="kicker">Picked</p>
-              <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{activeEvent.title}</h4>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-slate-900">
-                <div className="rounded-[0.95rem] bg-emerald-50 px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Hours</p>
+              <h4 className="mt-1 truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-slate-900 dark:text-slate-50">
+                <div className="rounded-[0.95rem] bg-emerald-50 px-3 py-2 dark:bg-emerald-950/55">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Hours</p>
                   <p className="text-base font-semibold">+{activeEvent.hours_given}h</p>
                 </div>
-                <div className="rounded-[0.95rem] bg-amber-50 px-3 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">Perk</p>
+                <div className="rounded-[0.95rem] bg-amber-50 px-3 py-2 dark:bg-amber-950/55">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">Perk</p>
                   <p className="truncate text-sm font-semibold">{activeCompensationLabel}</p>
                 </div>
               </div>
@@ -370,7 +427,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               </div>
             </article>
           ) : (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 text-sm text-slate-600">
+            <div className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/88 dark:text-slate-300">
               {filteredEvents.length === 0
                 ? "No events available right now."
                 : "Select a marker or event to load details here."}
@@ -379,8 +436,8 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
 
           <div>
             <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-900">More events</p>
-              <p className="text-xs text-slate-500">Click any row to move the pin focus</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">More events</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">Sorted by {getSortLabel(sortOption)}</p>
             </div>
 
             {filteredEvents.length > 0 ? (
@@ -394,7 +451,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                       "w-full rounded-[1rem] border px-3 py-2 text-left transition",
                       event.id === activeEventId
                         ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white/85 text-slate-800 hover:border-slate-400 hover:bg-slate-50"
+                        : "border-slate-200 bg-white/85 text-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
                     )}
                   >
                     <div className="mb-2 flex items-center gap-2 text-xs font-semibold">
@@ -405,15 +462,55 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                         {getCompensationLabel(event)}
                       </span>
                     </div>
+                    {event.skills_needed && event.skills_needed.length > 0 ? (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {event.skills_needed.slice(0, 3).map((skill) => (
+                          <span
+                            key={skill}
+                            className={cn(
+                              "rounded-full px-2 py-1 text-[10px] font-semibold",
+                              event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                            )}
+                          >
+                            {getSkillLabel(skill)}
+                          </span>
+                        ))}
+                        {event.skills_needed.length > 3 ? (
+                          <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold", event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100") }>
+                            +{event.skills_needed.length - 3} more
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {event.tags && event.tags.length > 0 ? (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {event.tags.slice(0, 4).map((tag) => (
+                          <span
+                            key={tag}
+                            className={cn(
+                              "rounded-full px-2 py-1 text-[10px] font-semibold",
+                              event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                            )}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {event.tags.length > 4 ? (
+                          <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold", event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100") }>
+                            +{event.tags.length - 4} more
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <p className="truncate text-sm font-semibold">{event.title}</p>
-                    <p className={cn("mt-1 truncate text-xs", event.id === activeEventId ? "text-slate-100" : "text-slate-500") }>
+                    <p className={cn("mt-1 truncate text-xs", event.id === activeEventId ? "text-slate-100" : "text-slate-500 dark:text-slate-300") }>
                       {event.organizations?.name || "Independent"}
                     </p>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 text-sm text-slate-600">
+              <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-300">
                 None
               </div>
             )}
@@ -436,13 +533,13 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
         />
 
         {activeEvent && isDetailsPanelOpen ? (
-          <aside className="pointer-events-auto absolute inset-y-4 left-4 z-[700] w-[min(30rem,calc(100%-2rem))] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/94 shadow-[0_24px_60px_rgba(20,33,46,0.24)] backdrop-blur-sm">
+          <aside className="pointer-events-auto absolute inset-y-4 left-4 z-[700] w-[min(30rem,calc(100%-2rem))] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/94 shadow-[0_24px_60px_rgba(20,33,46,0.24)] backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/94 dark:shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
             <div className="flex h-full min-h-0 flex-col">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-5">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-slate-700">
                 <div className="min-w-0">
                   <p className="kicker">Event details</p>
-                  <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">{activeEvent.title}</h4>
-                  <p className="mt-1 break-words text-sm text-slate-600">{activeEvent.organizations?.name || "Independent"}</p>
+                  <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
+                  <p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-300">{activeEvent.organizations?.name || "Independent"}</p>
                 </div>
                 <button
                   type="button"
@@ -454,47 +551,83 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               </div>
 
               <div className="min-h-0 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
-                <div className="grid grid-cols-2 gap-2 text-slate-900">
-                  <div className="rounded-[1rem] border border-emerald-200 bg-emerald-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Hours gained</p>
+                <div className="grid grid-cols-2 gap-2 text-slate-900 dark:text-slate-50">
+                  <div className="rounded-[1rem] border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/60 dark:bg-emerald-950/55">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Hours gained</p>
                     <p className="mt-1 text-2xl font-semibold">+{activeEvent.hours_given}h</p>
                   </div>
-                  <div className="rounded-[1rem] border border-amber-200 bg-amber-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">Compensation</p>
+                  <div className="rounded-[1rem] border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/55">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">Compensation</p>
                     <p className="mt-1 truncate text-sm font-semibold">{activeCompensationLabel}</p>
                   </div>
                 </div>
 
-                <p className="text-sm leading-6 text-slate-700">{activeEvent.description || "No description provided."}</p>
+                <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">{activeEvent.description || "No description provided."}</p>
 
-                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Address</p>
+                <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Address</p>
                     <p className="mt-1 break-words">{activeEvent.address || "Address not specified"}</p>
                   </div>
-                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Capacity</p>
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Capacity</p>
                     <p className="mt-1">{activeEvent.hours_given} hours, {activeEvent.max_volunteers} volunteers</p>
                   </div>
                 </div>
 
-                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Posted</p>
+                <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300 sm:grid-cols-2">
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Posted</p>
                     <p className="mt-1">{new Date(activeEvent.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Your status</p>
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Your status</p>
                     <p className="mt-1">{isSignedIn ? (activeEventApplicationStatus ?? "Not applied") : "Sign in to apply"}</p>
                   </div>
                 </div>
 
+                <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Application</p>
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Volunteers: {activeEventAcceptedCount} / {activeEvent.max_volunteers}
+                    </p>
+                  </div>
+
+                  {isSignedIn ? (
+                    <form className="mt-3">
+                      <button
+                        formAction={activeEventApplyAction ?? undefined}
+                        disabled={!canApplyToActiveEvent}
+                        className={cn(
+                          "w-full rounded-full px-4 py-2 text-sm font-semibold transition",
+                          canApplyToActiveEvent
+                            ? "primary-action hover:-translate-y-0.5"
+                            : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                        )}
+                      >
+                        {activeEventApplyButtonLabel}
+                      </button>
+                    </form>
+                  ) : (
+                    <Link href="/login" className="mt-3 inline-flex w-full justify-center rounded-full primary-action px-4 py-2 text-sm font-semibold">
+                      Log in to apply
+                    </Link>
+                  )}
+
+                  {activeEventApplyBlockReason ? (
+                    <p className="mt-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                      {activeEventApplyBlockReason}
+                    </p>
+                  ) : null}
+                </div>
+
                 {activeEventPerks.length > 0 ? (
                   <div>
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">All perks</p>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">All perks</p>
                     <div className="flex flex-wrap gap-2">
                       {activeEventPerks.map((perk) => (
-                        <span key={perk} className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                        <span key={perk} className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/55 dark:text-amber-200">
                           {perk}
                         </span>
                       ))}
@@ -502,15 +635,38 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                   </div>
                 ) : null}
 
-                {activeEvent.tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {activeEvent.tags.map((tag) => (
-                      <span key={tag} className="stamp-pill rounded-full px-2.5 py-1 text-xs font-semibold text-slate-800">
-                        {tag}
-                      </span>
-                    ))}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Requested skills</p>
+                    {activeEvent.skills_needed && activeEvent.skills_needed.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {activeEvent.skills_needed.map((skill) => (
+                          <span key={skill} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                            {getSkillLabel(skill)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">No specific skills listed.</p>
+                    )}
                   </div>
-                ) : null}
+
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3 dark:border-slate-700 dark:bg-slate-900/75">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Tags</p>
+                    {activeEvent.tags.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {activeEvent.tags.map((tag) => (
+                          <span key={tag} className="stamp-pill rounded-full px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">No tags listed.</p>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </div>
           </aside>

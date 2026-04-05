@@ -143,8 +143,11 @@ export default async function Home() {
         <header className="paper-panel relative z-40 rounded-[1.6rem] px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="kicker">&lt;insert site name&gt;</p>
-              <h1 className="display-font mt-1 break-words text-3xl font-semibold text-slate-900 sm:text-4xl">Volunteer atlas</h1>
+              <p className="kicker">Logged in as</p>
+              <h1 className="display-font mt-1 break-words text-3xl font-semibold text-slate-900 sm:text-4xl">
+                {profile.name}
+              </h1>
+              <p className="mt-1 break-words text-sm text-slate-600">{profile.contact_email || user.email || "Volunteer account"}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -165,6 +168,7 @@ export default async function Home() {
             isSignedIn={Boolean(user)}
             profile={profile}
             applicationStatusByEvent={applicationStatusByEvent}
+            userEmail={user.email || profile.contact_email || undefined}
           />
         </div>
       </div>

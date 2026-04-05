@@ -96,12 +96,12 @@ export default function VolunteerHeaderMenus({
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           Current volunteering events
         </summary>
-        <div className="paper-panel absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.35rem] p-4">
+        <div className="paper-panel-strong absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.5rem] p-4 sm:p-5">
           {isSignedIn ? (
             currentApplications.length > 0 ? (
               <div className="space-y-2">
                 {currentApplications.map((application) => (
-                  <div key={application.id} className="rounded-[1rem] border border-slate-200 bg-white/80 px-2 py-2 text-xs">
+                  <div key={application.id} className="rounded-[1.1rem] border border-slate-200 bg-white/80 px-3 py-3 text-xs">
                     <p className="font-semibold text-slate-800">{getVolunteerApplicationEventTitle(application)}</p>
                     <p className="text-slate-600">Status: {getApplicationStatusLabel(application.status)}</p>
                     {application.applied_at ? (
@@ -114,7 +114,7 @@ export default function VolunteerHeaderMenus({
               <p className="text-sm text-slate-600">No current volunteering events.</p>
             )
           ) : (
-            <Link href="/login" className="inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
+            <Link href="/login" className="inline-flex rounded-[1rem] primary-action px-4 py-2.5 text-sm font-semibold">
               Go to login
             </Link>
           )}
@@ -125,12 +125,12 @@ export default function VolunteerHeaderMenus({
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           Past volunteering events
         </summary>
-        <div className="paper-panel absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.35rem] p-4">
+        <div className="paper-panel-strong absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.5rem] p-4 sm:p-5">
           {isSignedIn ? (
             pastApplications.length > 0 ? (
               <div className="space-y-2">
                 {pastApplications.map((application) => (
-                  <div key={application.id} className="rounded-[1rem] border border-slate-200 bg-white/80 px-2 py-2 text-xs">
+                  <div key={application.id} className="rounded-[1.1rem] border border-slate-200 bg-white/80 px-3 py-3 text-xs">
                     <p className="font-semibold text-slate-800">{getVolunteerApplicationEventTitle(application)}</p>
                     <p className="text-slate-600">Status: {getApplicationStatusLabel(application.status)}</p>
                     <p className="text-slate-600">Hours earned: {getVolunteerApplicationEarnedHoursLabel(application)}</p>
@@ -144,7 +144,7 @@ export default function VolunteerHeaderMenus({
               <p className="text-sm text-slate-600">No past volunteering events yet.</p>
             )
           ) : (
-            <Link href="/login" className="inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
+            <Link href="/login" className="inline-flex rounded-[1rem] primary-action px-4 py-2.5 text-sm font-semibold">
               Go to login
             </Link>
           )}
@@ -155,7 +155,7 @@ export default function VolunteerHeaderMenus({
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           {profileSummaryLabel}
         </summary>
-        <div className="paper-panel absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.35rem] p-4">
+        <div className="paper-panel-strong absolute right-0 top-full z-10 mt-3 w-80 rounded-[1.5rem] p-4 sm:p-5">
           {isSignedIn && profile ? (
             <>
               <p className="text-sm font-semibold text-slate-900">{profile.name}</p>
@@ -173,7 +173,7 @@ export default function VolunteerHeaderMenus({
                 />
                 <button
                   type="submit"
-                  className="secondary-action w-full rounded-full px-3 py-2 text-sm font-semibold"
+                  className="secondary-action w-full rounded-[1rem] px-3 py-2.5 text-sm font-semibold"
                 >
                   Save name
                 </button>
@@ -190,12 +190,12 @@ export default function VolunteerHeaderMenus({
                 </div>
               </div>
 
-              <Link href="/volunteer/profile" className="mt-4 inline-flex w-full justify-center rounded-full primary-action px-3 py-2 text-sm font-semibold">
+              <Link href="/volunteer/profile" className="mt-4 inline-flex w-full justify-center rounded-[1rem] primary-action px-3 py-2.5 text-sm font-semibold">
                 Open progression board
               </Link>
 
               <form action={signOut} className="mt-4">
-                <button type="submit" className="primary-action w-full rounded-full px-3 py-2 text-sm font-semibold">
+                <button type="submit" className="primary-action w-full rounded-[1rem] px-3 py-2.5 text-sm font-semibold">
                   Log out
                 </button>
               </form>
@@ -204,7 +204,7 @@ export default function VolunteerHeaderMenus({
             <>
               <p className="text-sm font-semibold text-slate-900">Not signed in</p>
               <p className="mt-1 text-sm text-slate-600">Sign in to see your profile and skills.</p>
-              <Link href="/login" className="mt-4 inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
+              <Link href="/login" className="mt-4 inline-flex rounded-[1rem] primary-action px-4 py-2.5 text-sm font-semibold">
                 Go to login
               </Link>
             </>

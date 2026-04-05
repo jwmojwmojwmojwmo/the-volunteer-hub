@@ -102,10 +102,10 @@ export default async function VolunteerProfilePage() {
   if (!profile) {
     return (
       <main className="min-h-screen bg-gray-50 p-8">
-        <div className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-950/88">
           <h1 className="text-xl font-semibold text-gray-900">Profile not found</h1>
-          <p className="mt-2 text-sm text-gray-600">We could not load your volunteer profile yet.</p>
-          <Link href="/" className="mt-4 inline-flex rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900">
+          <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">We could not load your volunteer profile yet.</p>
+          <Link href="/" className="mt-4 inline-flex rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
             Back to dashboard
           </Link>
         </div>
@@ -131,12 +131,12 @@ export default async function VolunteerProfilePage() {
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <section className="paper-panel rounded-[2rem] p-5 sm:p-7">
+        <section className="paper-panel-strong rounded-[2rem] p-5 sm:p-7 dark:border-slate-800 dark:bg-slate-950/90">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="kicker">Passport record</p>
-              <h1 className="display-font mt-1 text-4xl font-semibold text-slate-900 sm:text-5xl">Your volunteer stampbook</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+              <h1 className="display-font mt-1 text-4xl font-semibold text-slate-900 dark:text-slate-50 sm:text-5xl">Your volunteer stampbook</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
                 This is your travel document for volunteering. Self-declared basics set the foundation, verified stamps are
                 the official visas, and the final page summarizes your journey with clear milestone records.
               </p>
@@ -158,7 +158,7 @@ export default async function VolunteerProfilePage() {
             <PassportFlipbook
               pageOne={(
                 <div className="space-y-4">
-                  <div className="rounded-[1.25rem] border border-slate-200 bg-white/90 p-4 sm:p-5">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white/90 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/88">
                     <p className="kicker">Page 1 · Identity</p>
                     <div className="mt-3 flex flex-wrap items-start gap-4">
                       <div className="flex h-24 w-24 items-center justify-center rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(135deg,#0b5d66,#c45c2d)] text-3xl font-black text-white shadow-[0_18px_36px_rgba(20,33,46,0.22)]">
@@ -166,8 +166,8 @@ export default async function VolunteerProfilePage() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h2 className="display-font break-words text-3xl font-semibold text-slate-900">{profile.name}</h2>
-                        <p className="mt-2 break-words text-sm text-slate-600">{profile.contact_email || user.email || "Not set"}</p>
+                        <h2 className="display-font break-words text-3xl font-semibold text-slate-900 dark:text-slate-50">{profile.name}</h2>
+                        <p className="mt-2 break-words text-sm text-slate-600 dark:text-slate-300">{profile.contact_email || user.email || "Not set"}</p>
 
                         <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
                           <span className="stamp-pill rounded-full px-3 py-1">{profile.completed_hours} hours</span>
@@ -179,13 +179,13 @@ export default async function VolunteerProfilePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4">
+                  <div className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/88">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="kicker">Basic info</p>
-                        <p className="mt-1 text-sm text-slate-600">Self-declared traits that help match you to better opportunities.</p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Self-declared traits that help match you to better opportunities.</p>
                       </div>
-                      <p className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <p className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950/82 dark:text-slate-100">
                         Passport basics
                       </p>
                     </div>
@@ -200,7 +200,7 @@ export default async function VolunteerProfilePage() {
                               key={stamp}
                               className={cn(
                                 "flex items-center gap-3 rounded-[1.1rem] border p-3 text-sm transition",
-                                enabled ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white"
+                                enabled ? "border-slate-900 bg-slate-50 dark:border-slate-800 dark:bg-slate-900" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/82"
                               )}
                             >
                               <input
@@ -210,7 +210,7 @@ export default async function VolunteerProfilePage() {
                                 defaultChecked={enabled}
                                 className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                               />
-                              <span className="font-semibold text-slate-800">{STAMP_LABELS[stamp]}</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-100">{STAMP_LABELS[stamp]}</span>
                             </label>
                           );
                         })}
@@ -225,14 +225,14 @@ export default async function VolunteerProfilePage() {
               )}
               pageTwo={(
                 <div className="space-y-4">
-                  <article className="rounded-[1.25rem] border border-slate-200 bg-white/90 p-4 sm:p-5">
+                  <article className="rounded-[1.25rem] border border-slate-200 bg-white/90 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/88">
                     <div className="flex items-end justify-between gap-3">
                       <div>
                         <p className="kicker">Page 2 · Visas</p>
-                        <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Official visas</h2>
-                        <p className="mt-2 text-sm text-slate-600">These are the hard-to-get certs that get stamped after review.</p>
+                        <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">Official visas</h2>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">These are the hard-to-get certs that get stamped after review.</p>
                       </div>
-                      <p className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <p className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950/82 dark:text-slate-100">
                         {verifiedUnlockedCount} / {VERIFIED_STAMPS.length} approved
                       </p>
                     </div>
@@ -246,20 +246,20 @@ export default async function VolunteerProfilePage() {
                             key={stamp}
                             className={cn(
                               "rounded-[1.15rem] border p-4",
-                              isUnlocked ? "border-slate-900 bg-white" : "border-slate-200 bg-white/70"
+                              isUnlocked ? "border-slate-900 bg-white dark:border-slate-800 dark:bg-slate-900" : "border-slate-200 bg-white/70 dark:border-slate-800 dark:bg-slate-950/82"
                             )}
                           >
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-semibold text-slate-900">{STAMP_LABELS[stamp]}</p>
                               <span className={cn(
                                 "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                                isUnlocked ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-700"
+                                isUnlocked ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
                               )}>
                                 {isUnlocked ? "Stamped" : "Awaiting"}
                               </span>
                             </div>
 
-                            <p className="mt-2 text-xs leading-5 text-slate-600">
+                            <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
                               {isUnlocked ? "Admin verified and ready to use in matching." : "Upload proof to request official verification."}
                             </p>
                           </article>
@@ -268,11 +268,11 @@ export default async function VolunteerProfilePage() {
                     </div>
                   </article>
 
-                  <form action={requestSkillVerification} className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4">
+                  <form action={requestSkillVerification} className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/88">
                     <p className="kicker">Submit proof</p>
                     <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-900" htmlFor="verified-stamp-select">
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-slate-50" htmlFor="verified-stamp-select">
                           Stamp to verify
                         </label>
                         <select
@@ -290,7 +290,7 @@ export default async function VolunteerProfilePage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-slate-900" htmlFor="verification-proof">
+                        <label className="block text-sm font-semibold text-slate-900 dark:text-slate-50" htmlFor="verification-proof">
                           Proof document
                         </label>
                         <input
@@ -313,31 +313,31 @@ export default async function VolunteerProfilePage() {
               )}
               pageThree={(
                 <div className="space-y-4">
-                  <article className="rounded-[1.25rem] border border-slate-200 bg-[linear-gradient(160deg,#fffdf8,#f5efe3)] p-4 sm:p-5">
+                  <article className="rounded-[1.25rem] border border-slate-200 bg-white/90 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/88">
                     <p className="kicker">Page 3 · Journey summary</p>
-                    <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Volunteer record snapshot</h2>
-                    <p className="mt-2 text-sm text-slate-600">
+                    <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">Volunteer record snapshot</h2>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                       A clean look at your totals and what is left to unlock next.
                     </p>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-[1.15rem] border border-emerald-200 bg-emerald-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Total events</p>
-                        <p className="mt-2 display-font text-4xl font-semibold text-emerald-900">{profile.completed_events}</p>
-                        <p className="mt-1 text-sm text-emerald-800">Completed opportunities</p>
+                      <div className="rounded-[1.15rem] border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/55">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Total events</p>
+                        <p className="mt-2 display-font text-4xl font-semibold text-emerald-900 dark:text-emerald-100">{profile.completed_events}</p>
+                        <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">Completed opportunities</p>
                       </div>
 
-                      <div className="rounded-[1.15rem] border border-cyan-200 bg-cyan-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">Total hours</p>
-                        <p className="mt-2 display-font text-4xl font-semibold text-cyan-900">{profile.completed_hours}</p>
-                        <p className="mt-1 text-sm text-cyan-800">Hours contributed</p>
+                      <div className="rounded-[1.15rem] border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900/60 dark:bg-cyan-950/55">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">Total hours</p>
+                        <p className="mt-2 display-font text-4xl font-semibold text-cyan-900 dark:text-cyan-100">{profile.completed_hours}</p>
+                        <p className="mt-1 text-sm text-cyan-800 dark:text-cyan-200">Hours contributed</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3 rounded-[1.2rem] border border-slate-200 bg-white/85 p-4 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-3 rounded-[1.2rem] border border-slate-200 bg-white/85 p-4 dark:border-slate-800 dark:bg-slate-950/82 sm:grid-cols-2">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Hours track</p>
-                        <p className="mt-1 text-sm text-slate-700">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Hours track</p>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                           {nextHoursMilestone ? `${nextHoursMilestone.currentValue} / ${nextHoursMilestone.target} hours` : "Complete"}
                         </p>
                         {nextHoursMilestone ? (
@@ -351,8 +351,8 @@ export default async function VolunteerProfilePage() {
                       </div>
 
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Events track</p>
-                        <p className="mt-1 text-sm text-slate-700">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Events track</p>
+                          <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                           {nextEventsMilestone ? `${nextEventsMilestone.currentValue} / ${nextEventsMilestone.target} events` : "Complete"}
                         </p>
                         {nextEventsMilestone ? (
@@ -367,14 +367,14 @@ export default async function VolunteerProfilePage() {
                     </div>
                   </article>
 
-                  <article className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4">
+                  <article className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/88">
                     <div className="flex items-end justify-between gap-3">
                       <div>
                         <p className="kicker">Milestone ledger</p>
-                        <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Auto-earned stamps</h2>
+                        <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">Auto-earned stamps</h2>
                       </div>
                       {nextOverallMilestone ? (
-                        <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                        <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950/82 dark:text-slate-100">
                           Next: {STAMP_LABELS[nextOverallMilestone.stamp]}
                         </div>
                       ) : null}
@@ -389,48 +389,48 @@ export default async function VolunteerProfilePage() {
                             key={stamp}
                             className={cn(
                               "rounded-[1.1rem] border p-4",
-                              isUnlocked ? "border-slate-900 bg-white" : "border-slate-200 bg-white/70"
+                              isUnlocked ? "border-slate-900 bg-white dark:border-slate-800 dark:bg-slate-900" : "border-slate-200 bg-white/70 dark:border-slate-800 dark:bg-slate-950/82"
                             )}
                           >
                             <div className="flex items-center justify-between gap-3">
-                              <p className="text-sm font-semibold text-slate-900">{STAMP_LABELS[stamp]}</p>
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{STAMP_LABELS[stamp]}</p>
                               <span className={cn(
                                 "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                                isUnlocked ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-700"
+                                isUnlocked ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
                               )}>
                                 {isUnlocked ? "Unlocked" : "Locked"}
                               </span>
                             </div>
-                            <p className="mt-2 text-xs text-slate-600">
+                            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                               {requirement.metric === "hours" ? "Hours milestone" : "Events milestone"}
                             </p>
                             {!isUnlocked ? (
                               <>
-                                <p className="mt-2 text-xs text-slate-700">
+                                <p className="mt-2 text-xs text-slate-700 dark:text-slate-200">
                                   {Math.min(currentValue, requirement.target)} / {requirement.target}
                                 </p>
-                                <div className="mt-2 h-2 rounded-full bg-slate-200">
+                                <div className="mt-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800">
                                   <div className="h-2 rounded-full bg-[linear-gradient(90deg,#0b5d66,#c45c2d)]" style={{ width: `${progress}%` }} />
                                 </div>
                               </>
                             ) : (
-                              <p className="mt-2 text-xs font-semibold text-slate-700">Milestone complete.</p>
+                              <p className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-200">Milestone complete.</p>
                             )}
                           </article>
                         );
                       })}
                     </div>
 
-                    <div className="mt-4 grid gap-3 rounded-[1.25rem] border border-slate-200 bg-white/80 p-4 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-3 rounded-[1.25rem] border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-950/82 sm:grid-cols-2">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Hours track</p>
-                        <p className="mt-1 text-sm text-slate-700">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Hours track</p>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                           {nextHoursMilestone ? `${nextHoursMilestone.currentValue} / ${nextHoursMilestone.target} hours` : "Complete"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Events track</p>
-                        <p className="mt-1 text-sm text-slate-700">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Events track</p>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">
                           {nextEventsMilestone ? `${nextEventsMilestone.currentValue} / ${nextEventsMilestone.target} events` : "Complete"}
                         </p>
                       </div>

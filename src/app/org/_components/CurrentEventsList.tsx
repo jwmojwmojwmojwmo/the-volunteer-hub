@@ -18,12 +18,12 @@ function getPendingCount(event: OrganizationEvent) {
 
 export default function CurrentEventsList({ currentEvents }: CurrentEventsListProps) {
   return (
-    <section className="paper-panel rounded-[1.75rem] p-5 sm:p-6">
+    <section className="paper-panel-strong rounded-[1.75rem] p-5 sm:p-6 dark:border-slate-700 dark:bg-slate-950/88">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="kicker">Active work</p>
-          <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Current events</h2>
-          <p className="mt-2 text-sm text-slate-600">Open an event to review volunteers, attendance, and completion.</p>
+          <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">Current events</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Open an event to review volunteers, attendance, and completion.</p>
         </div>
       </div>
 
@@ -36,12 +36,12 @@ export default function CurrentEventsList({ currentEvents }: CurrentEventsListPr
             const pendingCount = getPendingCount(event);
 
             return (
-              <article key={event.id} className="rounded-[1.35rem] border border-slate-200 bg-white/80 p-4 shadow-[0_12px_28px_rgba(20,33,46,0.06)]">
+              <article key={event.id} className="rounded-[1.35rem] border border-slate-200 bg-white/80 p-4 shadow-[0_12px_28px_rgba(20,33,46,0.06)] dark:border-slate-700 dark:bg-slate-900/80">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="display-font text-xl font-semibold text-slate-900">{event.title}</p>
-                    <p className="mt-1 text-sm text-slate-600">Status: {event.status}</p>
-                    <p className="mt-1 text-sm text-slate-600">Address: {event.address || "Not specified"}</p>
+                    <p className="display-font text-xl font-semibold text-slate-900 dark:text-slate-50">{event.title}</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Status: {event.status}</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Address: {event.address || "Not specified"}</p>
                   </div>
 
                   <Link
@@ -53,17 +53,17 @@ export default function CurrentEventsList({ currentEvents }: CurrentEventsListPr
                 </div>
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Approved</p>
-                    <p className="mt-1 font-semibold text-slate-900">{approvedCount}</p>
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-950/70">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Approved</p>
+                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-50">{approvedCount}</p>
                   </div>
-                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Applications</p>
-                    <p className="mt-1 font-semibold text-slate-900">{pendingCount}</p>
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-950/70">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Applications</p>
+                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-50">{pendingCount}</p>
                   </div>
-                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Capacity</p>
-                    <p className="mt-1 font-semibold text-slate-900">
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-950/70">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">Capacity</p>
+                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-50">
                       {approvedCount} / {event.max_volunteers}
                     </p>
                   </div>
@@ -72,7 +72,7 @@ export default function CurrentEventsList({ currentEvents }: CurrentEventsListPr
             );
           })
         ) : (
-          <p className="text-sm text-slate-600">No current events right now.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">No current events right now.</p>
         )}
       </div>
     </section>
