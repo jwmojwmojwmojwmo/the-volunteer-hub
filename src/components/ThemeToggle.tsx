@@ -75,7 +75,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="fixed bottom-10 right-4 z-[2000] rounded-full border-2 border-slate-500 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 transition dark:border-slate-500 dark:bg-slate-800 dark:text-slate-100"
+      className="fixed bottom-10 right-4 z-[2000] rounded-full border-2 border-slate-800 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition dark:border-slate-200 dark:bg-slate-950 dark:text-slate-50 dark:shadow-md"
       aria-label={buttonLabel}
       title={buttonLabel}
     >
