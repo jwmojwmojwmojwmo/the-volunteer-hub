@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { ApplicationReview, OrganizationEvent } from "@/types/organization";
+import type { OrganizationEvent } from "@/types/organization";
+import ReloadButton from "@/components/ReloadButton";
 import { organizationSignOut, updateOrganizationProfileName } from "./actions";
-import CurrentEventsMenu from "./_components/CurrentEventsMenu";
-import HostedEventsList from "./_components/HostedEventsList";
+import CurrentEventsList from "@/app/org/_components/CurrentEventsList";
+import HostedEventsList from "@/app/org/_components/HostedEventsList";
 
 export default async function OrganizationPage() {
   const supabase = await createClient();
@@ -28,8 +29,9 @@ export default async function OrganizationPage() {
 
   const { data: eventsData } = await supabase
     .from("events")
-    .select("id, title, address, status, created_at, max_volunteers, event_applications(id, status)")
+    .select("id, title, address, status, created_at, max_volunteers, skills_needed, event_applications(id, status, volunteer_id, volunteers(name, skills))")
     .eq("org_id", user.id)
+    .eq("hidden_from_org_dashboard", false)
     .order("created_at", { ascending: false });
 
   const allEvents = (eventsData ?? []) as OrganizationEvent[];
@@ -37,24 +39,6 @@ export default async function OrganizationPage() {
     const status = event.status.toLowerCase();
     return status === "recruiting" || status === "ongoing";
   });
-  const eventIds = currentEvents.map((event) => event.id);
-
-  const { data: applicationsData } = eventIds.length
-    ? await supabase
-        .from("event_applications")
-        .select("id, event_id, status, volunteers(name, contact_email, skills, completed_hours, completed_events, rating)")
-        .in("event_id", eventIds)
-        .order("applied_at", { ascending: false })
-    : { data: [] };
-
-  const applicationsByEvent = (applicationsData ?? []).reduce<Record<string, ApplicationReview[]>>((acc, item) => {
-    const application = item as ApplicationReview;
-    if (!acc[application.event_id]) {
-      acc[application.event_id] = [];
-    }
-    acc[application.event_id].push(application);
-    return acc;
-  }, {});
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -65,6 +49,7 @@ export default async function OrganizationPage() {
             <p className="mt-1 text-sm text-gray-600">{organization?.name || "Organization"}</p>
           </div>
           <div className="flex gap-2">
+            <ReloadButton label="Reload dashboard" />
             <details className="relative">
               <summary className="cursor-pointer list-none rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900">
                 Profile
@@ -92,7 +77,6 @@ export default async function OrganizationPage() {
                 </form>
               </div>
             </details>
-            <CurrentEventsMenu currentEvents={currentEvents} applicationsByEvent={applicationsByEvent} />
             <Link href="/org/events/new" className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white">
               Create new event
             </Link>
@@ -103,6 +87,8 @@ export default async function OrganizationPage() {
             </form>
           </div>
         </div>
+
+        <CurrentEventsList currentEvents={currentEvents} />
 
         <HostedEventsList allEvents={allEvents} />
       </div>

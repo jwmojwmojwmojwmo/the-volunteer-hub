@@ -1,6 +1,7 @@
 export type EventCard = {
   id: string;
   created_at: string;
+  status: string;
   title: string;
   description: string | null;
   address: string | null;
@@ -24,8 +25,11 @@ export type VolunteerApplication = {
   id: string;
   event_id: string;
   status: string;
+  attended?: boolean;
   applied_at?: string;
   events: {
     title: string;
+    status: string;
+    hours_given?: number;
   }[] | null;
 };

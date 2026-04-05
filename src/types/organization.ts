@@ -1,3 +1,13 @@
+export type OrganizationEventApplication = {
+  id: string;
+  status: string;
+  volunteer_id?: string;
+  volunteers?: {
+    name: string;
+    skills: string[] | null;
+  }[] | null;
+};
+
 export type OrganizationEvent = {
   id: string;
   title: string;
@@ -5,7 +15,8 @@ export type OrganizationEvent = {
   status: string;
   created_at: string;
   max_volunteers: number;
-  event_applications: { id: string; status: string }[];
+  skills_needed: string[] | null;
+  event_applications: OrganizationEventApplication[];
 };
 
 export type ApplicationReview = {

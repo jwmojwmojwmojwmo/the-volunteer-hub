@@ -43,6 +43,22 @@ export const AUTO_EARNED_STAMPS = [
     STAMPS.EVENTS_50
 ] as const;
 
+export const AUTO_EARNED_STAMP_REQUIREMENTS: Record<
+    (typeof AUTO_EARNED_STAMPS)[number],
+    { metric: "hours" | "events"; target: number }
+> = {
+    [STAMPS.HOURS_10]: { metric: "hours", target: 10 },
+    [STAMPS.HOURS_40]: { metric: "hours", target: 40 },
+    [STAMPS.HOURS_100]: { metric: "hours", target: 100 },
+    [STAMPS.HOURS_250]: { metric: "hours", target: 250 },
+    [STAMPS.HOURS_500]: { metric: "hours", target: 500 },
+    [STAMPS.EVENTS_1]: { metric: "events", target: 1 },
+    [STAMPS.EVENTS_5]: { metric: "events", target: 5 },
+    [STAMPS.EVENTS_10]: { metric: "events", target: 10 },
+    [STAMPS.EVENTS_25]: { metric: "events", target: 25 },
+    [STAMPS.EVENTS_50]: { metric: "events", target: 50 }
+};
+
 // Certs that require a document upload and admin verification
 export const VERIFIED_STAMPS = [
     STAMPS.POLICE_CHECK, 

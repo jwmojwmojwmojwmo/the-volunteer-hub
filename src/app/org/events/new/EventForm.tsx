@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createOrganizationEvent } from "@/app/org/actions";
 import { SELF_DECLARED_STAMPS, STAMP_LABELS, VERIFIED_STAMPS } from "@/lib/stamps";
 import TagSelector from "./TagSelector";
-import { generateEventWithAI } from "./ai-actions";
+import { generateEventWithAI, geocodeAddress, reverseGeocodeCoordinates, searchAddressSuggestions } from "./ai-actions";
 
 type EventFormProps = {
   existingTags: string[];
+};
+
+type AddressSuggestion = {
+  displayName: string;
+  lat: string;
+  lng: string;
 };
 
 export default function EventForm({ existingTags }: EventFormProps) {
@@ -16,6 +22,13 @@ export default function EventForm({ existingTags }: EventFormProps) {
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isAddressSearching, setIsAddressSearching] = useState(false);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const [lastGeocodedAddress, setLastGeocodedAddress] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const addressSuggestionCache = useRef<Map<string, AddressSuggestion[]>>(new Map());
 
   const [formData, setFormData] = useState({
     title: "",
@@ -40,6 +53,64 @@ export default function EventForm({ existingTags }: EventFormProps) {
     setFormData(prev => ({ ...prev, [stateKey.charAt(0).toLowerCase() + stateKey.slice(1)]: value }));
   };
 
+  useEffect(() => {
+    const query = formData.address.trim();
+
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      setIsAddressSearching(false);
+      return;
+    }
+
+    let isActive = true;
+    const timeoutId = setTimeout(async () => {
+      setIsAddressSearching(true);
+      try {
+        const normalizedQuery = query.toLowerCase();
+        const cachedSuggestions = addressSuggestionCache.current.get(normalizedQuery);
+
+        if (cachedSuggestions) {
+          if (isActive) {
+            setAddressSuggestions(cachedSuggestions);
+          }
+          return;
+        }
+
+        const suggestions = await searchAddressSuggestions(query);
+        addressSuggestionCache.current.set(normalizedQuery, suggestions);
+        if (isActive) {
+          setAddressSuggestions(suggestions);
+        }
+      } catch (error) {
+        console.error("Address suggestion lookup failed:", error);
+        if (isActive) {
+          setAddressSuggestions([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsAddressSearching(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+    };
+  }, [formData.address]);
+
+  const applyAddressSuggestion = (suggestion: AddressSuggestion) => {
+    setFormData((prev) => ({
+      ...prev,
+      address: suggestion.displayName,
+      lat: suggestion.lat,
+      lng: suggestion.lng
+    }));
+    setAddressSuggestions([]);
+    setGeocodeError(null);
+    setLastGeocodedAddress(suggestion.displayName);
+  };
+
   const handleSkillToggle = (skill: string) => {
     setSelectedSkills(prev => 
       prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
@@ -51,16 +122,21 @@ export default function EventForm({ existingTags }: EventFormProps) {
     setAiError(null);
     try {
       const generatedData = await generateEventWithAI(aiPrompt, existingTags, stampValues);
+      const generatedAddress = generatedData.address?.trim() || "";
 
       setFormData(prev => ({
         ...prev,
         title: generatedData.title || prev.title,
         description: generatedData.description || prev.description,
-        address: generatedData.address || prev.address,
+        address: generatedAddress || prev.address,
         hours: generatedData.volunteerHours || prev.hours,
         compensation: generatedData.compensationOptions || prev.compensation,
         maxVolunteers: generatedData.maxVolunteers || prev.maxVolunteers,
       }));
+
+      if (generatedAddress) {
+        await autoFillCoordinates(generatedAddress, true);
+      }
 
       if (Array.isArray(generatedData.tags)) {
         const cleanTags = generatedData.tags.map((t: string) => t.trim()).filter(Boolean);
@@ -80,6 +156,84 @@ export default function EventForm({ existingTags }: EventFormProps) {
       setAiError("Failed to generate event details. Try adding more context.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const autoFillCoordinates = async (addressToGeocode: string, force = false) => {
+    const normalizedAddress = addressToGeocode.trim();
+
+    if (!normalizedAddress || normalizedAddress.length < 5) {
+      return;
+    }
+
+    if (!force && normalizedAddress.toLowerCase() === lastGeocodedAddress.toLowerCase()) {
+      return;
+    }
+
+    setIsGeocoding(true);
+    setGeocodeError(null);
+
+    try {
+      const geocoded = await geocodeAddress(normalizedAddress);
+
+      if (!geocoded) {
+        setGeocodeError("Could not auto-fill coordinates for this address.");
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        address: geocoded.displayName || prev.address,
+        lat: geocoded.lat,
+        lng: geocoded.lng
+      }));
+      setLastGeocodedAddress((geocoded.displayName || normalizedAddress).trim());
+    } catch (error) {
+      console.error("Address geocoding failed:", error);
+      setGeocodeError("Could not auto-fill coordinates for this address.");
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeocodeError("Your browser does not support location access.");
+      return;
+    }
+
+    setIsLocatingUser(true);
+    setGeocodeError(null);
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const lat = position.coords.latitude.toFixed(7);
+      const lng = position.coords.longitude.toFixed(7);
+      const resolvedAddress = await reverseGeocodeCoordinates(lat, lng);
+
+      setFormData((prev) => ({
+        ...prev,
+        address: resolvedAddress || prev.address,
+        lat,
+        lng
+      }));
+
+      if (resolvedAddress) {
+        setLastGeocodedAddress(resolvedAddress);
+      }
+      setAddressSuggestions([]);
+    } catch (error) {
+      console.error("Current location autofill failed:", error);
+      setGeocodeError("Could not get your current location. Please allow location access and try again.");
+    } finally {
+      setIsLocatingUser(false);
     }
   };
 
@@ -143,9 +297,51 @@ export default function EventForm({ existingTags }: EventFormProps) {
             name="eventAddress"
             value={formData.address}
             onChange={handleInputChange}
+            onBlur={() => autoFillCoordinates(formData.address)}
             placeholder="e.g., 123 Stanley Park Dr, Vancouver"
+            required
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
+          {isAddressSearching ? <p className="mt-1 text-xs text-gray-500">Finding address suggestions...</p> : null}
+          {addressSuggestions.length > 0 ? (
+            <div className="mt-2 max-h-52 overflow-y-auto rounded-md border border-gray-200 bg-white">
+              {addressSuggestions.map((suggestion) => (
+                <button
+                  key={`${suggestion.displayName}-${suggestion.lat}-${suggestion.lng}`}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    applyAddressSuggestion(suggestion);
+                  }}
+                  className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-700 last:border-b-0 hover:bg-gray-50"
+                >
+                  {suggestion.displayName}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-xs text-gray-500">Pick a suggested address to auto-fill exact coordinates.</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => autoFillCoordinates(formData.address, true)}
+                disabled={isGeocoding || formData.address.trim().length < 5}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isGeocoding ? "Finding coordinates..." : "Auto-fill coordinates"}
+              </button>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={isLocatingUser}
+                className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLocatingUser ? "Getting location..." : "Use my current location"}
+              </button>
+            </div>
+          </div>
+          {geocodeError ? <p className="mt-1 text-xs text-red-600">{geocodeError}</p> : null}
         </div>
         
         <div className="grid grid-cols-2 gap-4">
@@ -220,7 +416,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900">Latitude (Optional)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-900">Latitude</label>
             <input
               name="locationLatitude"
               value={formData.lat}
@@ -228,11 +424,12 @@ export default function EventForm({ existingTags }: EventFormProps) {
               type="number"
               step="any"
               placeholder="e.g., 49.2827"
+              required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900">Longitude (Optional)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-900">Longitude</label>
             <input
               name="locationLongitude"
               value={formData.lng}
@@ -240,6 +437,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
               type="number"
               step="any"
               placeholder="e.g., -123.1207"
+              required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </div>

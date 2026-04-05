@@ -101,12 +101,42 @@ export async function updateOrganizationProfileName(formData: FormData) {
   revalidatePath("/org");
 }
 
+export async function hideCompletedEventFromDashboard(formData: FormData) {
+  const { supabase, user } = await requireOrganizationUser();
+  const eventId = getTrimmedField(formData, "eventId");
+
+  if (!eventId) {
+    return;
+  }
+
+  const { data: event } = await supabase
+    .from("events")
+    .select("id, org_id, status")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (!event || event.org_id !== user.id) {
+    return;
+  }
+
+  if ((event.status || "").toLowerCase() !== "completed") {
+    return;
+  }
+
+  await supabase
+    .from("events")
+    .update({ hidden_from_org_dashboard: true })
+    .eq("id", eventId);
+
+  revalidatePath("/org");
+}
+
 export async function createOrganizationEvent(formData: FormData) {
   const { supabase, user } = await requireOrganizationUser();
 
   const title = getTrimmedField(formData, "eventTitle");
   const description = getTrimmedField(formData, "eventDescription") || null;
-  const address = getTrimmedField(formData, "eventAddress") || null;
+  const address = getTrimmedField(formData, "eventAddress");
   const hoursGiven = Number(getTrimmedField(formData, "volunteerHours") || "0");
   const maxVolunteers = Number(getTrimmedField(formData, "maxVolunteers") || "1");
   const compensation = parseStringList(getTrimmedField(formData, "compensationOptions"));
@@ -122,9 +152,23 @@ export async function createOrganizationEvent(formData: FormData) {
   const skillsNeeded = [...new Set(skillsNeededRaw)].filter(isAllowedSkill);
   const latRaw = getTrimmedField(formData, "locationLatitude");
   const lngRaw = getTrimmedField(formData, "locationLongitude");
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
 
   if (!title) {
     redirect("/org/events/new?error=title-required");
+  }
+
+  if (!address) {
+    redirect("/org/events/new?error=address-required");
+  }
+
+  if (!latRaw || !lngRaw) {
+    redirect("/org/events/new?error=location-required");
+  }
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    redirect("/org/events/new?error=invalid-location");
   }
 
   if (hasInvalidSkill) {
@@ -135,12 +179,12 @@ export async function createOrganizationEvent(formData: FormData) {
     org_id: string;
     title: string;
     description: string | null;
-    address: string | null;
+    address: string;
     hours_given: number;
     compensation: string[] | null;
     skills_needed: string[] | null;
-    lat: number | null;
-    lng: number | null;
+    lat: number;
+    lng: number;
     max_volunteers: number;
     status: string;
   } = {
@@ -151,8 +195,8 @@ export async function createOrganizationEvent(formData: FormData) {
     hours_given: Number.isFinite(hoursGiven) ? hoursGiven : 0,
     compensation: compensation.length > 0 ? compensation : null,
     skills_needed: skillsNeeded.length > 0 ? skillsNeeded : null,
-    lat: latRaw ? Number(latRaw) : null,
-    lng: lngRaw ? Number(lngRaw) : null,
+    lat,
+    lng,
     max_volunteers: Number.isFinite(maxVolunteers) && maxVolunteers > 0 ? maxVolunteers : 1,
     status: "recruiting"
   };

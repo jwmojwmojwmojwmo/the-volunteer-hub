@@ -5,6 +5,30 @@ import { getTrimmedField } from "@/lib/forms";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+async function ensureVolunteerProfile(userId: string, email: string | null, fullName?: string | null) {
+  const supabase = await createClient();
+  const fallbackName = (fullName || "").trim() || email || "Volunteer";
+
+  const { data: existingVolunteer } = await supabase
+    .from("volunteers")
+    .select("id, name, contact_email, completed_hours, completed_events, rating, skills")
+    .eq("id", userId)
+    .maybeSingle();
+
+  await supabase.from("volunteers").upsert(
+    {
+      id: userId,
+      name: (existingVolunteer?.name || "").trim() || fallbackName,
+      contact_email: existingVolunteer?.contact_email || email,
+      completed_hours: existingVolunteer?.completed_hours ?? 0,
+      completed_events: existingVolunteer?.completed_events ?? 0,
+      rating: existingVolunteer?.rating ?? 0,
+      skills: existingVolunteer?.skills ?? []
+    },
+    { onConflict: "id" }
+  );
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
@@ -19,18 +43,7 @@ export async function signup(formData: FormData) {
   const { data: signedUpUser } = await supabase.auth.getUser();
 
   if (signedUpUser.user) {
-    await supabase.from("volunteers").upsert(
-      {
-        id: signedUpUser.user.id,
-        name: signedUpUser.user.user_metadata?.full_name || email,
-        contact_email: email,
-        completed_hours: 0,
-        completed_events: 0,
-        rating: 0,
-        skills: []
-      },
-      { onConflict: "id" }
-    );
+    await ensureVolunteerProfile(signedUpUser.user.id, email, signedUpUser.user.user_metadata?.full_name);
   }
 
   if (error) {
@@ -55,10 +68,14 @@ export async function login(formData: FormData) {
     redirect("/login?error=invalid-password");
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     redirect("/login?error=invalid-credentials");
+  }
+
+  if (data.user) {
+    await ensureVolunteerProfile(data.user.id, data.user.email ?? email, data.user.user_metadata?.full_name);
   }
 
   revalidatePath("/");

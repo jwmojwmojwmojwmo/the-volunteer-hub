@@ -2,6 +2,50 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+type GeocodeResult = {
+  lat: string;
+  lng: string;
+  displayName: string;
+};
+
+type AddressSuggestion = {
+  displayName: string;
+  lat: string;
+  lng: string;
+};
+
+type NominatimAddressParts = {
+  house_number?: string;
+  road?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+};
+
+function formatHumanReadableAddress(parts?: NominatimAddressParts, fallback?: string) {
+  if (!parts) {
+    return fallback?.trim() || "";
+  }
+
+  const street = [parts.house_number, parts.road].filter(Boolean).join(" ").trim();
+  const locality = parts.city || parts.town || parts.village || parts.suburb || parts.neighbourhood;
+  const region = parts.state;
+  const postal = parts.postcode;
+  const country = parts.country;
+
+  const formatted = [street, locality, region, postal, country]
+    .map((segment) => segment?.trim())
+    .filter((segment): segment is string => Boolean(segment && segment.length > 0))
+    .join(", ");
+
+  return formatted || fallback?.trim() || "";
+}
+
 export async function generateEventWithAI(promptText: string, existingTags: string[], availableSkills: string[]) {
   if (!promptText || promptText.trim().length < 10) {
     throw new Error("Prompt too short");
@@ -50,4 +94,129 @@ export async function generateEventWithAI(promptText: string, existingTags: stri
     console.error("AI Event Generation Error:", error);
     throw new Error("Failed to parse AI response");
   }
+}
+
+export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+  const trimmedAddress = address.trim();
+
+  if (!trimmedAddress || trimmedAddress.length < 5) {
+    return null;
+  }
+
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", trimmedAddress);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("addressdetails", "1");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "youcode-2026-event-geocoder/1.0"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    address?: NominatimAddressParts;
+  }>;
+  const firstMatch = payload[0];
+
+  if (!firstMatch?.lat || !firstMatch?.lon) {
+    return null;
+  }
+
+  const formattedAddress = formatHumanReadableAddress(firstMatch.address, firstMatch.display_name || trimmedAddress);
+
+  return {
+    lat: firstMatch.lat,
+    lng: firstMatch.lon,
+    displayName: formattedAddress || firstMatch.display_name || trimmedAddress
+  };
+}
+
+export async function searchAddressSuggestions(query: string): Promise<AddressSuggestion[]> {
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery || normalizedQuery.length < 3) {
+    return [];
+  }
+
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", normalizedQuery);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("limit", "5");
+  url.searchParams.set("addressdetails", "1");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "youcode-2026-event-geocoder/1.0"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    address?: NominatimAddressParts;
+  }>;
+
+  return payload
+    .filter((entry) => Boolean(entry.lat && entry.lon && entry.display_name))
+    .map((entry) => ({
+      displayName: formatHumanReadableAddress(entry.address, entry.display_name) || (entry.display_name as string),
+      lat: entry.lat as string,
+      lng: entry.lon as string
+    }));
+}
+
+export async function reverseGeocodeCoordinates(lat: string, lng: string): Promise<string | null> {
+  const normalizedLat = lat.trim();
+  const normalizedLng = lng.trim();
+
+  if (!normalizedLat || !normalizedLng) {
+    return null;
+  }
+
+  const url = new URL("https://nominatim.openstreetmap.org/reverse");
+  url.searchParams.set("lat", normalizedLat);
+  url.searchParams.set("lon", normalizedLng);
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "youcode-2026-event-geocoder/1.0"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as {
+    display_name?: string;
+    address?: NominatimAddressParts;
+  };
+
+  const formatted = formatHumanReadableAddress(payload.address, payload.display_name);
+  return formatted || null;
 }

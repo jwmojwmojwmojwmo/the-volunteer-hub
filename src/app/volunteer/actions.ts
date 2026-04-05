@@ -29,6 +29,7 @@ export async function requestSkillVerification(formData: FormData): Promise<void
   }
 
   revalidatePath("/");
+  revalidatePath("/volunteer/profile");
 }
 
 export async function updateSelfDeclaredSkills(formData: FormData): Promise<void> {
@@ -57,6 +58,7 @@ export async function updateSelfDeclaredSkills(formData: FormData): Promise<void
 
   await supabase.from("volunteers").update({ skills: mergedSkills }).eq("id", data.user.id);
   revalidatePath("/");
+  revalidatePath("/volunteer/profile");
 }
 
 export async function updateProfileName(formData: FormData): Promise<void> {
@@ -75,6 +77,7 @@ export async function updateProfileName(formData: FormData): Promise<void> {
 
   await supabase.from("volunteers").update({ name }).eq("id", data.user.id);
   revalidatePath("/");
+  revalidatePath("/volunteer/profile");
 }
 
 export async function applyToEvent(eventId: string, _formData: FormData): Promise<void> {
@@ -91,7 +94,7 @@ export async function applyToEvent(eventId: string, _formData: FormData): Promis
 
   const [{ data: event, error: eventError }, { data: volunteerData, error: volunteerError }] = await Promise.all([
     supabase.from("events").select("id, status, max_volunteers, skills_needed").eq("id", eventId).single(),
-    supabase.from("volunteers").select("id, skills").eq("id", volunteerId).single()
+    supabase.from("volunteers").select("id, name, contact_email, skills").eq("id", volunteerId).single()
   ]);
 
   if (eventError || !event) {
@@ -119,7 +122,7 @@ export async function applyToEvent(eventId: string, _formData: FormData): Promis
         },
         { onConflict: "id" }
       )
-      .select("id, skills")
+      .select("id, name, contact_email, skills")
       .single();
 
     volunteer = createdVolunteer;
@@ -127,6 +130,16 @@ export async function applyToEvent(eventId: string, _formData: FormData): Promis
 
   if (!volunteer) {
     return;
+  }
+
+  const normalizedName = (volunteer.name || "").trim() || user.user_metadata?.full_name || user.email || "Volunteer";
+  const normalizedEmail = volunteer.contact_email || user.email || null;
+
+  if (normalizedName !== volunteer.name || normalizedEmail !== volunteer.contact_email) {
+    await supabase
+      .from("volunteers")
+      .update({ name: normalizedName, contact_email: normalizedEmail })
+      .eq("id", volunteerId);
   }
 
   const { data: existingApplication } = await supabase

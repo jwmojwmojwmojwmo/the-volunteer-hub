@@ -27,8 +27,14 @@ export default function VolunteerEventGrid({
           const isFull = spotsLeft <= 0;
           const submitAction = applyToEvent.bind(null, event.id);
           const myStatus = applicationStatusByEvent.get(event.id);
-          const canApply = isSignedIn && !myStatus;
-          const buttonLabel = myStatus ? getApplicationStatusLabel(myStatus) : isFull ? "Join waitlist" : "Apply now";
+          const canApply = isSignedIn && (!myStatus || myStatus === APPLICATION_STATUSES.WITHDRAWN);
+          const buttonLabel = myStatus === APPLICATION_STATUSES.WITHDRAWN
+            ? "Apply again"
+            : myStatus
+              ? getApplicationStatusLabel(myStatus)
+              : isFull
+                ? "Join waitlist"
+                : "Apply now";
 
           return (
             <div key={event.id} className="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col">
@@ -50,7 +56,11 @@ export default function VolunteerEventGrid({
                 </p>
 
                 <div className="mb-2 flex items-start justify-between">
-                  <h2 className="text-xl font-bold leading-tight text-gray-900">{event.title}</h2>
+                  <h2 className="text-xl font-bold leading-tight text-gray-900">
+                    <Link href={`/events/${event.id}`} className="hover:underline">
+                      {event.title}
+                    </Link>
+                  </h2>
                   <span className="whitespace-nowrap rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-800">
                     {event.hours_given} hrs
                   </span>
@@ -69,6 +79,10 @@ export default function VolunteerEventGrid({
 
                 <p className="mb-4 line-clamp-2 text-sm text-gray-600">{event.description}</p>
                 <p className="mb-4 text-sm text-gray-600">Address: {event.address || "Not specified"}</p>
+
+                <Link href={`/events/${event.id}`} className="mb-2 inline-flex text-sm font-medium text-gray-900 underline">
+                  View full event details
+                </Link>
               </div>
 
               <div className={`mt-auto pt-4 flex items-end justify-between border-t border-gray-100 ${isFull ? "opacity-60" : ""}`}>

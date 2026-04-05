@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import ReloadButton from "@/components/ReloadButton";
 import { submitOrganizationReview } from "./actions";
 
 type OrganizationProfilePageProps = {
@@ -94,9 +95,12 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
               <p className="mt-1 text-sm text-gray-600">Organization profile and volunteer reviews</p>
               <p className="mt-2 text-xs text-gray-500">Joined {new Date(organization.created_at).toLocaleDateString()}</p>
             </div>
-            <Link href="/" className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900">
-              Back to events
-            </Link>
+            <div className="flex items-center gap-2">
+              <ReloadButton label="Reload profile" />
+              <Link href="/" className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900">
+                Back to events
+              </Link>
+            </div>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

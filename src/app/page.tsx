@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { EventCard, VolunteerApplication, VolunteerProfile } from "@/types/volunteer";
+import { buildEventMetaById, normalizeVolunteerApplications } from "@/lib/volunteer-application-utils";
+import ReloadButton from "@/components/ReloadButton";
 import VolunteerHeaderMenus from "./volunteer/_components/VolunteerHeaderMenus";
 import VolunteerEventBrowser from "./volunteer/_components/VolunteerEventBrowser";
 
@@ -21,16 +23,6 @@ export default async function Home() {
         .maybeSingle()
     : { data: null };
   const profile: VolunteerProfile | null = profileData;
-
-  const { data: applicationsData } = user
-    ? await supabase
-        .from("event_applications")
-        .select("id, event_id, status, applied_at, events(title)")
-        .eq("volunteer_id", user.id)
-        .order("applied_at", { ascending: false })
-    : { data: [] };
-  const myApplications = (applicationsData ?? []) as VolunteerApplication[];
-  const applicationStatusByEvent = new Map(myApplications.map((application) => [application.event_id, application.status]));
 
   const { data: eventsData, error } = await supabase
     .from("events")
@@ -63,6 +55,18 @@ export default async function Home() {
     };
   });
 
+  const eventMetaById = buildEventMetaById(formattedEvents);
+
+  const { data: applicationsData } = user
+    ? await supabase
+        .from("event_applications")
+        .select("id, event_id, status, attended, applied_at, events(title, status, hours_given)")
+        .eq("volunteer_id", user.id)
+        .order("applied_at", { ascending: false })
+    : { data: [] };
+  const myApplications = normalizeVolunteerApplications((applicationsData ?? []) as VolunteerApplication[], eventMetaById);
+  const applicationStatusByEvent = new Map(myApplications.map((application) => [application.event_id, application.status]));
+
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-5xl mx-auto">
@@ -72,16 +76,19 @@ export default async function Home() {
             <p className="mt-1 text-sm text-gray-600">Browse events, search, and sort by what matters most to you.</p>
           </div>
 
-          <VolunteerHeaderMenus
-            isSignedIn={Boolean(user)}
-            userEmail={user?.email}
-            profile={profile}
-            myApplications={myApplications}
-          />
+          <div className="flex items-center gap-2">
+            <ReloadButton label="Reload dashboard" />
+            <VolunteerHeaderMenus
+              isSignedIn={Boolean(user)}
+              userEmail={user?.email}
+              profile={profile}
+              myApplications={myApplications}
+            />
+          </div>
         </div>
 
         <VolunteerEventBrowser
-          events={formattedEvents}
+          events={formattedEvents.filter((event) => event.status.toLowerCase() !== "completed")}
           isSignedIn={Boolean(user)}
           profile={profile}
           applicationStatusByEvent={applicationStatusByEvent}
