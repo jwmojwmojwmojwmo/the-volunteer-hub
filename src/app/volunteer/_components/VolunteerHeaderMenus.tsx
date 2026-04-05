@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, type RefObject } from "react";
 import { getApplicationStatusLabel } from "@/lib/application-status";
 import {
   getVolunteerApplicationEarnedHoursLabel,
@@ -21,14 +24,75 @@ export default function VolunteerHeaderMenus({
   profile,
   myApplications
 }: VolunteerHeaderMenusProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const currentMenuRef = useRef<HTMLDetailsElement>(null);
+  const pastMenuRef = useRef<HTMLDetailsElement>(null);
+  const profileMenuRef = useRef<HTMLDetailsElement>(null);
+
+  const closeAllMenus = () => {
+    [currentMenuRef, pastMenuRef, profileMenuRef].forEach((menuRef) => {
+      if (menuRef.current?.open) {
+        menuRef.current.open = false;
+      }
+    });
+  };
+
+  const closeOtherMenus = (activeRef: RefObject<HTMLDetailsElement | null>) => {
+    const refs = [currentMenuRef, pastMenuRef, profileMenuRef];
+    refs.forEach((menuRef) => {
+      if (menuRef !== activeRef && menuRef.current?.open) {
+        menuRef.current.open = false;
+      }
+    });
+  };
+
+  const handleMenuToggle = (menuRef: RefObject<HTMLDetailsElement | null>) => {
+    if (menuRef.current?.open) {
+      closeOtherMenus(menuRef);
+    }
+  };
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!containerRef.current) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!containerRef.current.contains(target)) {
+        closeAllMenus();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeAllMenus();
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
   const { currentApplications, pastApplications } = splitVolunteerApplicationsByEventStatus(myApplications);
   const profileSummaryLabel = isSignedIn && profile?.name
     ? `Profile: ${profile.name.split(" ")[0]}`
     : "Profile";
 
   return (
-    <div className="flex shrink-0 flex-wrap gap-2">
-      <details className="relative">
+    <div ref={containerRef} className="flex shrink-0 flex-wrap gap-2">
+      <details ref={currentMenuRef} className="relative" onToggle={() => handleMenuToggle(currentMenuRef)}>
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           Current volunteering events
         </summary>
@@ -57,7 +121,7 @@ export default function VolunteerHeaderMenus({
         </div>
       </details>
 
-      <details className="relative">
+      <details ref={pastMenuRef} className="relative" onToggle={() => handleMenuToggle(pastMenuRef)}>
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           Past volunteering events
         </summary>
@@ -87,7 +151,7 @@ export default function VolunteerHeaderMenus({
         </div>
       </details>
 
-      <details className="relative">
+      <details ref={profileMenuRef} className="relative" onToggle={() => handleMenuToggle(profileMenuRef)}>
         <summary className="stamp-pill cursor-pointer list-none rounded-full px-4 py-2 text-sm font-semibold">
           {profileSummaryLabel}
         </summary>

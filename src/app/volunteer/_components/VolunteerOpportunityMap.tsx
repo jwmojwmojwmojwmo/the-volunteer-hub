@@ -1,9 +1,8 @@
 "use client";
 
 import { divIcon } from "leaflet";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import type { EventCard } from "@/types/volunteer";
 
 type VolunteerOpportunityMapProps = {
@@ -75,7 +74,7 @@ export default function VolunteerOpportunityMap({ events, activeEventId, onSelec
 
   return (
     <div className={`relative ${className ?? ""}`}>
-      <div className="absolute left-4 top-4 z-[500] flex flex-wrap gap-2">
+      <div className="absolute left-16 top-4 z-[500] flex flex-wrap gap-2">
         <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
           {eventsWithLocation.length > 0 ? `${eventsWithLocation.length} mapped` : "No mapped events"}
         </span>
@@ -111,23 +110,7 @@ export default function VolunteerOpportunityMap({ events, activeEventId, onSelec
                 eventHandlers={{
                   click: () => onSelectEvent?.(event.id)
                 }}
-              >
-                <Popup>
-                  <div className="max-w-[14rem] space-y-2">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        {event.organizations?.name || "Independent"}
-                      </p>
-                      <p className="font-semibold text-slate-900">{event.title}</p>
-                    </div>
-                    <p className="text-sm text-slate-700">{event.address || "Location not specified"}</p>
-                    <p className="text-xs text-slate-600">{event.hours_given} volunteer hours</p>
-                    <Link href={`/events/${event.id}`} className="inline-flex rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
-                      View details
-                    </Link>
-                  </div>
-                </Popup>
-              </Marker>
+              />
             );
           })}
         </MapContainer>

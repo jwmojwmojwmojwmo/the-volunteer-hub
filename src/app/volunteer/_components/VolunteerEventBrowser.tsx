@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { APPLICATION_STATUSES } from "@/lib/application-status";
@@ -55,11 +54,20 @@ function getSortLabel(sortOption: SortOption) {
   }
 }
 
+function getCompensationLabel(event: EventCard) {
+  if (event.compensation && event.compensation.length > 0) {
+    return event.compensation[0];
+  }
+
+  return "No listed perks";
+}
+
 export default function VolunteerEventBrowser({ events, isSignedIn, profile, applicationStatusByEvent }: VolunteerEventBrowserProps) {
   const [keyword, setKeyword] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState<SortOption>("recommended");
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
 
   const allAvailableTags = useMemo(() => {
     const tags = new Set<string>();
@@ -123,6 +131,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   useEffect(() => {
     if (filteredEvents.length === 0) {
       setActiveEventId(null);
+      setIsDetailsPanelOpen(false);
       return;
     }
 
@@ -134,14 +143,22 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
 
   const activeEvent = filteredEvents.find((event) => event.id === activeEventId) ?? filteredEvents[0] ?? null;
   const eventsWithCoordinates = filteredEvents.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
+  const activeEventApplicationStatus = activeEvent ? applicationStatusByEvent.get(activeEvent.id) ?? null : null;
+  const activeEventPerks = activeEvent?.compensation ?? [];
+  const activeCompensationLabel = activeEvent ? getCompensationLabel(activeEvent) : "No listed perks";
+
+  const openDetailsForEvent = (eventId: string) => {
+    setActiveEventId(eventId);
+    setIsDetailsPanelOpen(true);
+  };
 
   return (
-    <div className="relative z-10 grid min-h-[calc(100vh-11rem)] gap-4 lg:grid-cols-[380px_minmax(0,1fr)] xl:gap-6">
-      <aside className="paper-panel flex min-h-0 flex-col rounded-[1.75rem] p-4 sm:p-5 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+    <div className="relative z-10 grid h-full min-h-0 gap-4 overflow-hidden lg:grid-cols-[380px_minmax(0,1fr)] xl:gap-6">
+      <aside className="paper-panel flex h-full min-h-0 flex-col overflow-hidden rounded-[1.75rem] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
           <div className="min-w-0">
             <p className="kicker">Volunteer</p>
-            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">Volunteer, volunteering page</h3>
+            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">&lt;insert site name&gt;</h3>
             <p className="mt-2 text-xs text-slate-600">Choose a point on the map to load its details here.</p>
           </div>
           <button
@@ -172,7 +189,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
           </div>
         </div>
 
-        <div className="mt-4 space-y-4 overflow-y-auto pr-1">
+        <div className="mt-4 space-y-4 overflow-hidden pr-1">
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-900" htmlFor="event-search">
               Search
@@ -228,42 +245,35 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
 
           {activeEvent ? (
             <article className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 shadow-[0_16px_36px_rgba(20,33,46,0.08)]">
-              <p className="kicker">Selected event</p>
-              <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">{activeEvent.title}</h4>
-              <p className="mt-2 break-words text-sm text-slate-600">{activeEvent.organizations?.name || "Independent"}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-700">{activeEvent.description || "No description provided."}</p>
-
-              <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Address</p>
-                  <p className="mt-1 break-words">{activeEvent.address || "Address not specified"}</p>
+              <p className="kicker">Picked</p>
+              <h4 className="mt-1 truncate text-lg font-semibold text-slate-900">{activeEvent.title}</h4>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-slate-900">
+                <div className="rounded-[0.95rem] bg-emerald-50 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Hours</p>
+                  <p className="text-base font-semibold">+{activeEvent.hours_given}h</p>
                 </div>
-                <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Capacity</p>
-                  <p className="mt-1">{activeEvent.hours_given} hours, {activeEvent.max_volunteers} volunteers</p>
+                <div className="rounded-[0.95rem] bg-amber-50 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700">Perk</p>
+                  <p className="truncate text-sm font-semibold">{activeCompensationLabel}</p>
                 </div>
               </div>
-
-              {activeEvent.tags.length > 0 ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {activeEvent.tags.map((tag) => (
-                    <span key={tag} className="stamp-pill rounded-full px-2.5 py-1 text-xs font-semibold text-slate-800">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link href={`/events/${activeEvent.id}`} className="inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
-                  Open event
-                </Link>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setActiveEventId(null)}
+                  onClick={() => setIsDetailsPanelOpen(true)}
+                  className="inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold"
+                >
+                  Open details
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveEventId(null);
+                    setIsDetailsPanelOpen(false);
+                  }}
                   className="inline-flex rounded-full secondary-action px-4 py-2 text-sm font-semibold"
                 >
-                  Clear selection
+                  Clear
                 </button>
               </div>
             </article>
@@ -287,7 +297,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                   <button
                     key={event.id}
                     type="button"
-                    onClick={() => setActiveEventId(event.id)}
+                    onClick={() => openDetailsForEvent(event.id)}
                     className={cn(
                       "w-full rounded-[1rem] border px-3 py-2 text-left transition",
                       event.id === activeEventId
@@ -295,9 +305,17 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                         : "border-slate-200 bg-white/85 text-slate-800 hover:border-slate-400 hover:bg-slate-50"
                     )}
                   >
+                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold">
+                      <span className={cn("rounded-full px-2 py-1", event.id === activeEventId ? "bg-emerald-200 text-emerald-900" : "bg-emerald-100 text-emerald-800")}>
+                        +{event.hours_given}h
+                      </span>
+                      <span className={cn("max-w-[60%] truncate rounded-full px-2 py-1", event.id === activeEventId ? "bg-amber-200 text-amber-900" : "bg-amber-100 text-amber-800")}>
+                        {getCompensationLabel(event)}
+                      </span>
+                    </div>
                     <p className="truncate text-sm font-semibold">{event.title}</p>
                     <p className={cn("mt-1 truncate text-xs", event.id === activeEventId ? "text-slate-100" : "text-slate-500") }>
-                      {event.organizations?.name || "Independent"} • {event.hours_given} hrs
+                      {event.organizations?.name || "Independent"}
                     </p>
                   </button>
                 ))}
@@ -311,13 +329,94 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
         </div>
       </aside>
 
-      <section className="z-0 min-h-[calc(100vh-11rem)] lg:h-[calc(100vh-3rem)]">
+      <section className="relative z-0 h-full min-h-0 overflow-hidden">
         <VolunteerOpportunityMap
           events={filteredEvents}
           activeEventId={activeEventId}
-          onSelectEvent={setActiveEventId}
+          onSelectEvent={openDetailsForEvent}
           className="h-full"
         />
+
+        {activeEvent && isDetailsPanelOpen ? (
+          <aside className="pointer-events-auto absolute inset-y-4 left-4 z-[700] w-[min(30rem,calc(100%-2rem))] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/94 shadow-[0_24px_60px_rgba(20,33,46,0.24)] backdrop-blur-sm">
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-5">
+                <div className="min-w-0">
+                  <p className="kicker">Event details</p>
+                  <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900">{activeEvent.title}</h4>
+                  <p className="mt-1 break-words text-sm text-slate-600">{activeEvent.organizations?.name || "Independent"}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDetailsPanelOpen(false)}
+                  className="secondary-action shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="min-h-0 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+                <div className="grid grid-cols-2 gap-2 text-slate-900">
+                  <div className="rounded-[1rem] border border-emerald-200 bg-emerald-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Hours gained</p>
+                    <p className="mt-1 text-2xl font-semibold">+{activeEvent.hours_given}h</p>
+                  </div>
+                  <div className="rounded-[1rem] border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">Compensation</p>
+                    <p className="mt-1 truncate text-sm font-semibold">{activeCompensationLabel}</p>
+                  </div>
+                </div>
+
+                <p className="text-sm leading-6 text-slate-700">{activeEvent.description || "No description provided."}</p>
+
+                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Address</p>
+                    <p className="mt-1 break-words">{activeEvent.address || "Address not specified"}</p>
+                  </div>
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Capacity</p>
+                    <p className="mt-1">{activeEvent.hours_given} hours, {activeEvent.max_volunteers} volunteers</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Posted</p>
+                    <p className="mt-1">{new Date(activeEvent.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="rounded-[1rem] border border-slate-200 bg-white/85 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Your status</p>
+                    <p className="mt-1">{isSignedIn ? (activeEventApplicationStatus ?? "Not applied") : "Sign in to apply"}</p>
+                  </div>
+                </div>
+
+                {activeEventPerks.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">All perks</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activeEventPerks.map((perk) => (
+                        <span key={perk} className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                          {perk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeEvent.tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {activeEvent.tags.map((tag) => (
+                      <span key={tag} className="stamp-pill rounded-full px-2.5 py-1 text-xs font-semibold text-slate-800">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </aside>
+        ) : null}
       </section>
     </div>
   );
