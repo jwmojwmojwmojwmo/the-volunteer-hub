@@ -401,6 +401,15 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
             <article className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 shadow-[0_16px_36px_rgba(20,33,46,0.08)] dark:border-slate-700 dark:bg-slate-950/88">
               <p className="kicker">Picked</p>
               <h4 className="mt-1 truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
+              {activeEvent.organizations?.id ? (
+                <Link
+                  href={`/organizations/${activeEvent.organizations.id}`}
+                  className="mt-1 inline-flex max-w-full items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 underline decoration-2 underline-offset-4 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:text-slate-50"
+                  aria-label={`Open ${activeEvent.organizations.name || "organization"} review page`}
+                >
+                  {activeEvent.organizations.name || "Organization"}
+                </Link>
+              ) : null}
               <div className="mt-3 grid grid-cols-2 gap-2 text-slate-900 dark:text-slate-50">
                 <div className="rounded-[0.95rem] bg-emerald-50 px-3 py-2 dark:bg-emerald-950/55">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Hours</p>
@@ -544,7 +553,17 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                 <div className="min-w-0">
                   <p className="kicker">Event details</p>
                   <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
-                  <p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-300">{activeEvent.organizations?.name || "Independent"}</p>
+                  {activeEvent.organizations?.id ? (
+                    <Link
+                      href={`/organizations/${activeEvent.organizations.id}`}
+                      className="mt-1 inline-flex max-w-full break-words text-sm font-semibold text-slate-700 underline decoration-2 underline-offset-4 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-slate-50"
+                      aria-label={`Open ${activeEvent.organizations.name || "organization"} review page`}
+                    >
+                      {activeEvent.organizations.name || "Organization"}
+                    </Link>
+                  ) : (
+                    <p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-300">Independent</p>
+                  )}
                 </div>
                 <button
                   type="button"

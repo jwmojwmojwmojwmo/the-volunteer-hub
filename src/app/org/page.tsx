@@ -6,6 +6,15 @@ import { organizationSignOut, updateOrganizationProfileName } from "./actions";
 import CurrentEventsList from "@/app/org/_components/CurrentEventsList";
 import HostedEventsList from "@/app/org/_components/HostedEventsList";
 
+type OrgReview = {
+  id: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+  volunteer_id: string;
+  volunteers: { name: string | null }[] | null;
+};
+
 export default async function OrganizationPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -39,7 +48,18 @@ export default async function OrganizationPage() {
     .eq("hidden_from_org_dashboard", false)
     .order("created_at", { ascending: false });
 
+  const { data: reviewsData } = await supabase
+    .from("organization_reviews")
+    .select("id, rating, review_text, created_at, volunteer_id, volunteers(name)")
+    .eq("org_id", user.id)
+    .order("created_at", { ascending: false });
+
   const allEvents = (eventsData ?? []) as OrganizationEvent[];
+  const allReviews = (reviewsData ?? []) as OrgReview[];
+  const recentReviews = allReviews.slice(0, 3);
+  const averageReviewRating = allReviews.length > 0
+    ? (allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length).toFixed(1)
+    : null;
   const currentEvents = allEvents.filter((event) => {
     const status = event.status.toLowerCase();
     return status === "recruiting" || status === "ongoing";
@@ -81,6 +101,36 @@ export default async function OrganizationPage() {
                       Save name
                     </button>
                   </form>
+
+                  <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white/80 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Your reviews</p>
+                      <p className="text-xs font-semibold text-slate-600">
+                        {recentReviews.length > 0 ? `${averageReviewRating} / 5.0` : "No reviews"}
+                      </p>
+                    </div>
+
+                    {recentReviews.length > 0 ? (
+                      <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {recentReviews.map((review) => (
+                          <article key={review.id} className="rounded-[0.95rem] border border-slate-200 bg-white p-3 text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-semibold text-slate-900">{review.volunteers?.[0]?.name || "Volunteer"}</p>
+                              <p className="font-semibold text-slate-800">{review.rating} / 5</p>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500">{new Date(review.created_at).toLocaleDateString()}</p>
+                            <p className="mt-2 text-slate-700">{review.review_text || "No written review."}</p>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-600">No volunteer reviews yet.</p>
+                    )}
+
+                    <Link href={`/organizations/${user.id}`} className="mt-3 inline-flex text-xs font-semibold text-slate-900 underline decoration-2 underline-offset-4">
+                      Open full public profile
+                    </Link>
+                  </div>
                 </div>
               </details>
               <Link href="/org/events/new" className="inline-flex rounded-[1rem] primary-action px-4 py-2.5 text-sm font-semibold">

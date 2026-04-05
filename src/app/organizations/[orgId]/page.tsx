@@ -31,6 +31,7 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
+  const backHref = user?.id === orgId ? "/org" : "/";
 
   const { data: organization } = await supabase
     .from("organizations")
@@ -45,7 +46,7 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
           <p className="kicker">Organization profile</p>
           <h1 className="display-font mt-2 text-3xl font-semibold text-slate-900">Organization not found</h1>
           <p className="mt-2 text-sm text-slate-600">This profile may have been removed.</p>
-          <Link href="/" className="mt-4 inline-flex rounded-full primary-action px-3 py-2 text-sm font-semibold text-white">
+          <Link href={backHref} className="mt-4 inline-flex rounded-full primary-action px-3 py-2 text-sm font-semibold text-white">
             Back to events
           </Link>
         </div>
@@ -99,7 +100,7 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
             </div>
             <div className="flex items-center gap-2">
               <ReloadButton label="Reload profile" />
-              <Link href="/" className="rounded-full secondary-action px-3 py-2 text-sm font-semibold">
+              <Link href={backHref} className="rounded-full secondary-action px-3 py-2 text-sm font-semibold">
                 Back to events
               </Link>
             </div>
