@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { applyToEvent } from "@/app/actions";
+import { applyToEvent } from "@/app/volunteer/actions";
 import { APPLICATION_STATUSES, getApplicationStatusLabel } from "@/lib/application-status";
 import type { EventCard } from "@/types/volunteer";
 

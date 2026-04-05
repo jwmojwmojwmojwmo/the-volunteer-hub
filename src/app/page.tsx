@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { EventCard, VolunteerApplication, VolunteerProfile } from "@/types/volunteer";
-import VolunteerHeaderMenus from "./_components/VolunteerHeaderMenus";
-import VolunteerEventGrid from "./_components/VolunteerEventGrid";
+import VolunteerHeaderMenus from "./volunteer/_components/VolunteerHeaderMenus";
+import VolunteerEventGrid from "./volunteer/_components/VolunteerEventGrid";
 
 export default async function Home() {
   const supabase = await createClient();

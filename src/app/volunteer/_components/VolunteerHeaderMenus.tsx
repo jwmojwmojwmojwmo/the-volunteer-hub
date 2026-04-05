@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getApplicationStatusLabel } from "@/lib/application-status";
 import { AUTO_EARNED_STAMPS, STAMP_LABELS, VERIFIED_STAMPS } from "@/lib/stamps";
-import { requestSkillVerification, signOut, updateProfileName } from "@/app/actions";
+import { requestSkillVerification, signOut, updateProfileName } from "@/app/volunteer/actions";
 import type { VolunteerApplication, VolunteerProfile } from "@/types/volunteer";
 
 type VolunteerHeaderMenusProps = {
@@ -32,9 +32,7 @@ export default function VolunteerHeaderMenus({
                     <p className="font-medium text-gray-800">{application.events?.[0]?.title || "Event"}</p>
                     <p className="text-gray-600">Status: {getApplicationStatusLabel(application.status)}</p>
                     {application.applied_at ? (
-                      <p className="text-gray-500">
-                        Applied: {new Date(application.applied_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-gray-500">Applied: {new Date(application.applied_at).toLocaleDateString()}</p>
                     ) : null}
                   </div>
                 ))}
