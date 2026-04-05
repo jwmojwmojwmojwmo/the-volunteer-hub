@@ -77,6 +77,12 @@ export default async function OrganizationProfilePage() {
   const fiveStarCount = reviews.filter((review) => review.rating >= 5).length;
   const fourStarCount = reviews.filter((review) => review.rating >= 4 && review.rating < 5).length;
   const underFourStarCount = reviews.filter((review) => review.rating < 4).length;
+  const organizationInitials = organization.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "O";
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
@@ -90,7 +96,11 @@ export default async function OrganizationProfilePage() {
 
         <section className="paper-panel-strong rounded-[2rem] p-5 sm:p-7">
           <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
-            <div className="h-52 rounded-[1.2rem] border border-slate-300 bg-slate-300" aria-hidden="true" />
+            <div className="flex h-52 items-center justify-center rounded-[1.2rem] border border-slate-300 bg-slate-100" aria-label="Default profile picture">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-slate-500 bg-white text-2xl font-bold text-slate-700">
+                {organizationInitials}
+              </div>
+            </div>
 
             <div>
               <p className="kicker">Organization profile</p>

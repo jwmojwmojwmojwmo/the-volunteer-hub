@@ -15,8 +15,8 @@ const bodyFont = Atkinson_Hyperlegible({
 });
 
 export const metadata: Metadata = {
-  title: "YouCode 2026",
-  description: "Volunteer opportunities and progression tracking for volunteers and organizations"
+  title: "Volunteer Hub",
+  description: "Volunteer Hub connects volunteers and organizations through event discovery, applications, and verified service tracking"
 };
 
 export default function RootLayout({

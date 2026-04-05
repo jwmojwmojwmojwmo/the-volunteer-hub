@@ -23,7 +23,7 @@ export default async function Home() {
         <header className="paper-panel relative z-40 rounded-[1.6rem] px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="kicker">Volunteer platform</p>
+              <p className="kicker">Volunteer Hub</p>
               <h1 className="display-font mt-1 break-words text-3xl font-semibold text-slate-900 sm:text-4xl">Find the right opportunities</h1>
             </div>
 
@@ -39,31 +39,67 @@ export default async function Home() {
           </div>
         ) : null}
 
-        <section className="grid gap-4 lg:grid-cols-2 xl:gap-6">
-          <article className="paper-panel min-h-[28rem] rounded-[1.85rem] px-5 py-6 sm:px-8">
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="kicker">For volunteers</p>
-              <h2 className="display-font mt-2 text-4xl font-semibold text-slate-900">Start volunteering</h2>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-                Explore opportunities on a live map, apply to events, and track your progress as you complete hours.
-              </p>
-              <Link href="/login" className="mt-8 rounded-full primary-action px-6 py-3 text-base font-semibold">
-                Start Volunteering
-              </Link>
-            </div>
+        <section className="paper-panel rounded-[1.85rem] px-5 py-6 sm:px-8 sm:py-8">
+          <article className="max-w-4xl">
+            <p className="kicker">For volunteers</p>
+            <h2 className="display-font mt-2 text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+              Find nearby shifts, apply once, and track every hour in one verified dashboard.
+            </h2>
+            <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
+              Discover verified opportunities on the map, submit one clear application, and keep your profile focused on what matters: accepted events, earned hours, verified certifications, and progression milestones.
+            </p>
+
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-800 sm:text-base">
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>Live map with real opportunities from verified hosts, including hours, perks, and required skills.</span>
+              </li>
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>One-tap apply flow when signed in, with all submissions visible in a dedicated My Applications view.</span>
+              </li>
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>Profile combines self-declared skills, admin-verified certifications, and a milestone progression path.</span>
+              </li>
+            </ul>
+
+            <Link href="/login" className="mt-7 inline-flex rounded-full primary-action px-6 py-3 text-base font-semibold">
+              Start volunteering
+            </Link>
+            <p className="mt-2 text-xs text-slate-600">Create a volunteer account and jump straight into nearby opportunities.</p>
           </article>
 
-          <article className="paper-panel min-h-[28rem] rounded-[1.85rem] px-5 py-6 sm:px-8">
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="kicker">For organizations</p>
-              <h2 className="display-font mt-2 text-4xl font-semibold text-slate-900">Start organizing events</h2>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-                Create opportunities, review applications, track attendance, and build trusted volunteer relationships.
-              </p>
-              <Link href="/org/login" className="mt-8 rounded-full primary-action px-6 py-3 text-base font-semibold">
-                Start Organizing Events
-              </Link>
-            </div>
+          <div className="my-8 h-px w-full bg-slate-400/80" />
+
+          <article className="max-w-4xl">
+            <p className="kicker">For organizations</p>
+            <h2 className="display-font mt-2 text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+              Post shifts, review applicants, and record attendance from one operations desk.
+            </h2>
+            <p className="mt-5 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
+              The host dashboard is built for day-to-day execution: publish events quickly, evaluate applicants clearly, and update attendance with confidence while volunteers see only what they need.
+            </p>
+
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-800 sm:text-base">
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>Publish opportunities with location, shift hours, capacity limits, tags, and required certifications.</span>
+              </li>
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>Accept, waitlist, or decline applicants, then mark attendance after each event to keep records accurate.</span>
+              </li>
+              <li className="flex gap-3">
+                <span aria-hidden="true" className="mt-[0.58rem] h-2 w-2 shrink-0 rounded-full bg-[#0e5c93]" />
+                <span>Maintain a transparent organization profile that supports trust with volunteers and partners.</span>
+              </li>
+            </ul>
+
+            <Link href="/org/login" className="mt-7 inline-flex rounded-full primary-action px-6 py-3 text-base font-semibold">
+              Start organizing events
+            </Link>
+            <p className="mt-2 text-xs text-slate-600">Create an organization account to launch and manage events in minutes.</p>
           </article>
         </section>
 

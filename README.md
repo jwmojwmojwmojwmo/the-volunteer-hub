@@ -1,6 +1,6 @@
-# YouCode 2026
+# Volunteer Hub
 
-YouCode 2026 is a volunteer engagement website that helps people find meaningful community opportunities and helps organizations run reliable, well-tracked events.
+Volunteer Hub is a volunteer engagement website that helps people find meaningful community opportunities and helps organizations run reliable, well-tracked events.
 
 ## What This Website Does
 
@@ -94,4 +94,4 @@ npm run start
 
 ## License
 
-Internal project for YouCode 2026.
+Internal project for Volunteer Hub.

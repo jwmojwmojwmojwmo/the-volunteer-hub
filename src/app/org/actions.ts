@@ -57,10 +57,23 @@ async function ensureOrganizationProfile(userId: string, email: string | null, n
 export async function organizationSignup(formData: FormData) {
   const supabase = await createClient();
 
+  const name = getTrimmedField(formData, "name");
   const email = getTrimmedField(formData, "email");
   const password = getTrimmedField(formData, "password");
 
-  const { error } = await supabase.auth.signUp({ email, password });
+  if (!name) {
+    redirect("/org/signup?error=invalid-name");
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name
+      }
+    }
+  });
 
   if (error) {
     redirect(`/org/signup?error=${encodeURIComponent(error.message)}`);
@@ -68,7 +81,11 @@ export async function organizationSignup(formData: FormData) {
 
   const { data } = await supabase.auth.getUser();
   if (data.user) {
-    await ensureOrganizationProfile(data.user.id, data.user.email ?? email);
+    await ensureOrganizationProfile(
+      data.user.id,
+      data.user.email ?? email,
+      name || data.user.user_metadata?.full_name
+    );
   }
 
   revalidatePath("/org");
@@ -96,7 +113,7 @@ export async function organizationLogin(formData: FormData) {
   }
 
   if (data.user) {
-    await ensureOrganizationProfile(data.user.id, data.user.email ?? email);
+    await ensureOrganizationProfile(data.user.id, data.user.email ?? email, data.user.user_metadata?.full_name);
   }
 
   revalidatePath("/org");

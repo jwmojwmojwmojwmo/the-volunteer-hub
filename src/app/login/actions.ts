@@ -32,18 +32,32 @@ async function ensureVolunteerProfile(userId: string, email: string | null, full
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
+  const name = getTrimmedField(formData, "name");
   const email = getTrimmedField(formData, "email");
   const password = getTrimmedField(formData, "password");
+
+  if (!name) {
+    redirect("/signup?error=invalid-name");
+  }
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: name
+      }
+    }
   });
 
   const { data: signedUpUser } = await supabase.auth.getUser();
 
   if (signedUpUser.user) {
-    await ensureVolunteerProfile(signedUpUser.user.id, email, signedUpUser.user.user_metadata?.full_name);
+    await ensureVolunteerProfile(
+      signedUpUser.user.id,
+      email,
+      name || signedUpUser.user.user_metadata?.full_name
+    );
   }
 
   if (error) {

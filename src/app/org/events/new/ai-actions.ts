@@ -113,7 +113,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     method: "GET",
     headers: {
       "Accept": "application/json",
-      "User-Agent": "youcode-2026-event-geocoder/1.0"
+      "User-Agent": "volunteer-hub-event-geocoder/1.0"
     },
     cache: "no-store"
   });
@@ -160,7 +160,7 @@ export async function searchAddressSuggestions(query: string): Promise<AddressSu
     method: "GET",
     headers: {
       "Accept": "application/json",
-      "User-Agent": "youcode-2026-event-geocoder/1.0"
+      "User-Agent": "volunteer-hub-event-geocoder/1.0"
     },
     cache: "no-store"
   });
@@ -203,7 +203,7 @@ export async function reverseGeocodeCoordinates(lat: string, lng: string): Promi
     method: "GET",
     headers: {
       "Accept": "application/json",
-      "User-Agent": "youcode-2026-event-geocoder/1.0"
+      "User-Agent": "volunteer-hub-event-geocoder/1.0"
     },
     cache: "no-store"
   });

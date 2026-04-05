@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signup } from "@/app/login/actions";
 
 const errorMessages: Record<string, string> = {
+  "invalid-name": "Enter your name.",
   "invalid-email": "Enter a valid email address.",
   "invalid-password": "Enter your password.",
   "invalid-credentials": "Email or password is invalid."
@@ -44,13 +45,21 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           </div>
           <p className="kicker">Volunteer access</p>
           <h1 className="display-font mt-2 text-3xl font-semibold text-slate-900">Volunteer sign up</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Create your volunteer account with email and password.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Create your volunteer account with your name, email, and password.</p>
 
           {errorMessage ? (
             <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-medium text-rose-800">{errorMessage}</p>
           ) : null}
 
           <form className="mt-6 flex flex-col gap-3">
+            <input
+              className="input-shell"
+              name="name"
+              type="text"
+              placeholder="Full name"
+              autoComplete="name"
+              required
+            />
             <input
               className="input-shell"
               name="email"

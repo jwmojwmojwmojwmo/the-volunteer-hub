@@ -28,7 +28,7 @@ function buildVerificationId(date: Date) {
     10
   );
   const serial = ((monthDaySeed * 137 + 98765) % 90000) + 10000;
-  return `VBC-${date.getUTCFullYear()}-${serial}`;
+  return `VH-${date.getUTCFullYear()}-${serial}`;
 }
 
 export default async function VolunteerCertificatePage() {
@@ -92,10 +92,10 @@ export default async function VolunteerCertificatePage() {
           <div className="record-inner border-[3px] border-double px-4 py-6 sm:px-8 sm:py-8">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <p className="record-brand max-w-[28rem] text-xs font-bold uppercase tracking-[0.2em] sm:text-sm">
-                YouCode 2026 Community Initiative
+                Volunteer Hub Community Initiative
               </p>
               <p className="record-trust max-w-[24rem] text-left text-[0.68rem] font-semibold uppercase tracking-[0.13em] sm:text-right sm:text-[0.72rem]">
-                Partnered with VolunteerBC | Verified & Audited Records
+                Volunteer Hub Official Records | Verified & Audited
               </p>
             </header>
 
