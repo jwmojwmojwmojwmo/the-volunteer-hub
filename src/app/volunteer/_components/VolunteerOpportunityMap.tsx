@@ -28,10 +28,12 @@ const DEFAULT_CENTER: [number, number] = [49.2606, -123.2460];
 function CenterMapOnCurrentLocation({
   onStatusChange,
   onLocationChange,
+  onLocationSettled,
   locationRequestKey
 }: {
   onStatusChange: (status: VolunteerMapLocationStatus) => void;
   onLocationChange?: (location: Coordinates | null) => void;
+  onLocationSettled?: () => void;
   locationRequestKey?: number;
 }) {
   const map = useMap();
@@ -47,6 +49,7 @@ function CenterMapOnCurrentLocation({
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       onStatusChange("unsupported");
       onLocationChange?.(null);
+      onLocationSettled?.();
       return;
     }
 
@@ -60,10 +63,12 @@ function CenterMapOnCurrentLocation({
         map.setView([position.coords.latitude, position.coords.longitude], Math.max(map.getZoom(), 13), {
           animate: true
         });
+        onLocationSettled?.();
       },
       () => {
         onStatusChange("denied");
         onLocationChange?.(null);
+        onLocationSettled?.();
       },
       {
         enableHighAccuracy: true,
@@ -78,15 +83,17 @@ function CenterMapOnCurrentLocation({
 
 function FocusMapOnActiveEvent({
   activeEventId,
-  events
+  events,
+  canFocusActiveEvent
 }: {
   activeEventId?: string | null;
   events: EventCard[];
+  canFocusActiveEvent: boolean;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!activeEventId) {
+    if (!canFocusActiveEvent || !activeEventId) {
       return;
     }
 
@@ -100,7 +107,7 @@ function FocusMapOnActiveEvent({
         animate: false
       });
     });
-  }, [activeEventId, events, map]);
+  }, [activeEventId, canFocusActiveEvent, events, map]);
 
   return null;
 }
@@ -131,6 +138,7 @@ export default function VolunteerOpportunityMap({
   className
 }: VolunteerOpportunityMapProps) {
   const [locationStatus, setLocationStatus] = useState<VolunteerMapLocationStatus>("idle");
+  const [locationSettled, setLocationSettled] = useState(false);
   const eventsWithLocation = events.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
 
   const handleLocationStatusChange = (status: VolunteerMapLocationStatus) => {
@@ -164,9 +172,14 @@ export default function VolunteerOpportunityMap({
           <CenterMapOnCurrentLocation
             onStatusChange={handleLocationStatusChange}
             onLocationChange={onUserLocationChange}
+            onLocationSettled={() => setLocationSettled(true)}
             locationRequestKey={locationRequestKey}
           />
-          <FocusMapOnActiveEvent activeEventId={activeEventId} events={eventsWithLocation} />
+          <FocusMapOnActiveEvent
+            activeEventId={activeEventId}
+            events={eventsWithLocation}
+            canFocusActiveEvent={locationSettled || locationStatus !== "idle"}
+          />
 
           <TileLayer
             attribution='&copy; OpenStreetMap contributors &copy; CARTO'

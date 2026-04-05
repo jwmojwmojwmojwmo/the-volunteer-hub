@@ -267,7 +267,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Mode</p>
             <p
               title={getSortLabel(sortOption)}
-              className="mt-1 truncate text-[10px] font-semibold leading-none text-slate-900 dark:text-slate-50 sm:text-[11px]"
+              className="mt-1 truncate text-[9px] font-semibold leading-none text-slate-900 dark:text-slate-50 sm:text-[11px]"
             >
               {getSortLabel(sortOption)}
             </p>

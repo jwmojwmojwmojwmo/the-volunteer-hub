@@ -8,13 +8,15 @@ type HostedEventsListProps = {
 };
 
 export default function HostedEventsList({ allEvents }: HostedEventsListProps) {
+  const archivedEvents = allEvents.filter((event) => (event.status || "").toLowerCase() === "completed");
+
   return (
     <section className="paper-panel rounded-[1.75rem] p-5 sm:p-6">
       <p className="kicker">Archive</p>
-      <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">All hosted events</h2>
+      <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Completed events ready to archive</h2>
       <div className="mt-4 space-y-3">
-        {allEvents.length > 0 ? (
-          allEvents.map((event) => (
+        {archivedEvents.length > 0 ? (
+          archivedEvents.map((event) => (
             (() => {
               const approvedCount = (event.event_applications ?? []).filter(
                 (application) => application.status === APPLICATION_STATUSES.ACCEPTED
@@ -35,24 +37,22 @@ export default function HostedEventsList({ allEvents }: HostedEventsListProps) {
                       Manage event
                     </Link>
 
-                    {event.status.toLowerCase() === "completed" ? (
-                      <form action={hideCompletedEventFromDashboard}>
-                        <input type="hidden" name="eventId" value={event.id} />
-                        <button
-                          type="submit"
-                          className="rounded-[1rem] secondary-action px-3 py-2.5 text-xs font-semibold"
-                        >
-                          Remove from dashboard
-                        </button>
-                      </form>
-                    ) : null}
+                    <form action={hideCompletedEventFromDashboard}>
+                      <input type="hidden" name="eventId" value={event.id} />
+                      <button
+                        type="submit"
+                        className="rounded-[1rem] secondary-action px-3 py-2.5 text-xs font-semibold"
+                      >
+                        Move to archive
+                      </button>
+                    </form>
                   </div>
                 </div>
               );
             })()
           ))
         ) : (
-          <p className="text-sm text-slate-600">No events created yet.</p>
+          <p className="text-sm text-slate-600">No completed events ready for archive yet.</p>
         )}
       </div>
     </section>
