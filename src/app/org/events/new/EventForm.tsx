@@ -275,7 +275,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
             onChange={handleInputChange}
             placeholder="e.g., Stanley Park Tree Planting"
             required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-shell"
           />
         </div>
 
@@ -287,7 +287,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
             onChange={handleInputChange}
             placeholder="Describe what volunteers will be doing..."
             rows={5}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-shell"
           />
         </div>
 
@@ -300,7 +300,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
             onBlur={() => autoFillCoordinates(formData.address)}
             placeholder="e.g., 123 Stanley Park Dr, Vancouver"
             required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-shell"
           />
           {isAddressSearching ? <p className="mt-1 text-xs text-gray-500">Finding address suggestions...</p> : null}
           {addressSuggestions.length > 0 ? (
@@ -354,7 +354,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
               type="number"
               step="1"
               placeholder="e.g., 4"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="input-shell"
             />
           </div>
           <div>
@@ -366,7 +366,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
               type="number"
               step="1"
               placeholder="e.g., 10"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="input-shell"
             />
           </div>
         </div>
@@ -378,7 +378,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
             value={formData.compensation}
             onChange={handleInputChange}
             placeholder="e.g., Free lunch, T-shirt, Transit ticket"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-shell"
           />
         </div>
 
@@ -425,7 +425,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
               step="any"
               placeholder="e.g., 49.2827"
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="input-shell"
             />
           </div>
           <div>
@@ -438,7 +438,7 @@ export default function EventForm({ existingTags }: EventFormProps) {
               step="any"
               placeholder="e.g., -123.1207"
               required
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="input-shell"
             />
           </div>
         </div>

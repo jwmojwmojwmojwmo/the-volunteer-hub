@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 
 type ThemeMode = "dark" | "light";
 
+function getThemeFromDom(): ThemeMode {
+  const root = document.documentElement;
+  if (root.dataset.theme === "dark" || root.classList.contains("dark")) {
+    return "dark";
+  }
+  return "light";
+}
+
 function applyTheme(mode: ThemeMode) {
   const root = document.documentElement;
   if (mode === "dark") {
@@ -11,21 +19,52 @@ function applyTheme(mode: ThemeMode) {
   } else {
     root.classList.remove("dark");
   }
-  window.localStorage.setItem("theme", mode);
+  root.dataset.theme = mode;
+  try {
+    window.localStorage.setItem("theme", mode);
+  } catch {
+    // Ignore storage write failures so the toggle remains functional.
+  }
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [theme, setTheme] = useState<ThemeMode>("light");
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("theme");
-    const mode: ThemeMode = saved === "light" ? "light" : "dark";
-    setTheme(mode);
-    applyTheme(mode);
+    const root = document.documentElement;
+
+    const syncThemeFromDom = () => {
+      setTheme(getThemeFromDom());
+    };
+
+    syncThemeFromDom();
+
+    const observer = new MutationObserver(() => {
+      syncThemeFromDom();
+    });
+
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== "theme") {
+        return;
+      }
+      const nextTheme: ThemeMode = event.newValue === "light" ? "light" : "dark";
+      applyTheme(nextTheme);
+      syncThemeFromDom();
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme: ThemeMode = theme === "dark" ? "light" : "dark";
+    const currentTheme = getThemeFromDom();
+    const nextTheme: ThemeMode = currentTheme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     applyTheme(nextTheme);
   };
@@ -36,7 +75,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="fixed bottom-4 right-4 z-[2000] rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_rgba(20,33,46,0.2)] transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      className="fixed bottom-4 right-4 z-[2000] rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_rgba(20,33,46,0.2)] transition hover:-translate-y-0.5 hover:bg-white dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
       aria-label={buttonLabel}
       title={buttonLabel}
     >

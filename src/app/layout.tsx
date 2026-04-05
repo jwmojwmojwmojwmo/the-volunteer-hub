@@ -37,8 +37,10 @@ export default function RootLayout({
                   } else {
                     document.documentElement.classList.remove("dark");
                   }
+                  document.documentElement.dataset.theme = mode;
                 } catch (e) {
                   document.documentElement.classList.add("dark");
+                  document.documentElement.dataset.theme = "dark";
                 }
               })();
             `

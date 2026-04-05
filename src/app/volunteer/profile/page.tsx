@@ -298,7 +298,7 @@ export default async function VolunteerProfilePage() {
                           name="proof"
                           type="file"
                           accept="image/*,application/pdf"
-                          className="input-shell mt-2 file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white"
+                          className="input-shell mt-2 file:mr-4 file:rounded-full file:border-0 file:bg-slate-200 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-slate-900 dark:file:bg-slate-900 dark:file:text-white"
                         />
                       </div>
 

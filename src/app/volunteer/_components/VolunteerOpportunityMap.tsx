@@ -144,16 +144,16 @@ export default function VolunteerOpportunityMap({
   return (
     <div className={`relative ${className ?? ""}`}>
       <div className="absolute left-16 top-4 z-[500] flex flex-wrap gap-2">
-        <span className="rounded-full border border-slate-700 bg-slate-900/88 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow-sm">
+        <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-100">
           {eventsWithLocation.length > 0 ? `${eventsWithLocation.length} mapped` : "No mapped events"}
         </span>
         {locationStatus === "denied" ? (
-          <span className="rounded-full border border-amber-900/60 bg-amber-950/55 px-3 py-1.5 text-xs font-semibold text-amber-200 shadow-sm">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/55 dark:text-amber-200">
             Location blocked. Showing default area.
           </span>
         ) : null}
         {locationStatus === "unsupported" ? (
-          <span className="rounded-full border border-slate-700 bg-slate-900/88 px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-sm">
+          <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-200">
             Location unavailable in this browser.
           </span>
         ) : null}
@@ -213,7 +213,7 @@ export default function VolunteerOpportunityMap({
       </div>
 
       {events.length === 0 ? (
-        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-700 bg-slate-900/92 px-4 py-3 text-sm font-semibold text-slate-100 shadow-md">
+        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-200 bg-white/92 px-4 py-3 text-sm font-semibold text-slate-700 shadow-md dark:border-slate-700 dark:bg-slate-900/92 dark:text-slate-100">
           No events yet. The map is still ready and centered to your location when permission is allowed.
         </div>
       ) : null}
