@@ -3,43 +3,67 @@
 import { divIcon } from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { Circle } from "react-leaflet";
 import type { EventCard } from "@/types/volunteer";
+
+type Coordinates = { lat: number; lng: number };
+
+export type VolunteerMapLocationStatus = "idle" | "granted" | "denied" | "unsupported";
 
 type VolunteerOpportunityMapProps = {
   events: EventCard[];
   activeEventId?: string | null;
   onSelectEvent?: (eventId: string) => void;
+  userLocation?: Coordinates | null;
+  onUserLocationChange?: (location: Coordinates | null) => void;
+  onLocationStatusChange?: (status: VolunteerMapLocationStatus) => void;
   className?: string;
+  radiusKm?: number;
+  isRadiusFilterEnabled?: boolean;
+  locationRequestKey?: number;
 };
 
 const DEFAULT_CENTER: [number, number] = [49.2606, -123.2460];
 
-type LocationStatus = "idle" | "granted" | "denied" | "unsupported";
-
-function CenterMapOnCurrentLocation({ onStatusChange }: { onStatusChange: (status: LocationStatus) => void }) {
+function CenterMapOnCurrentLocation({
+  onStatusChange,
+  onLocationChange,
+  locationRequestKey
+}: {
+  onStatusChange: (status: VolunteerMapLocationStatus) => void;
+  onLocationChange?: (location: Coordinates | null) => void;
+  locationRequestKey?: number;
+}) {
   const map = useMap();
-  const hasCenteredRef = useRef(false);
+  const latestRequestRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (hasCenteredRef.current) {
+    const requestToken = locationRequestKey ?? 0;
+    if (latestRequestRef.current === requestToken) {
       return;
     }
-    hasCenteredRef.current = true;
+    latestRequestRef.current = requestToken;
 
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       onStatusChange("unsupported");
+      onLocationChange?.(null);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         onStatusChange("granted");
+        onLocationChange?.({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
         map.setView([position.coords.latitude, position.coords.longitude], Math.max(map.getZoom(), 13), {
           animate: true
         });
       },
       () => {
         onStatusChange("denied");
+        onLocationChange?.(null);
       },
       {
         enableHighAccuracy: true,
@@ -47,7 +71,7 @@ function CenterMapOnCurrentLocation({ onStatusChange }: { onStatusChange: (statu
         maximumAge: 60000
       }
     );
-  }, [map, onStatusChange]);
+  }, [map, onStatusChange, onLocationChange, locationRequestKey]);
 
   return null;
 }
@@ -65,9 +89,25 @@ function buildMarkerIcon(index: number, isActive: boolean) {
   });
 }
 
-export default function VolunteerOpportunityMap({ events, activeEventId, onSelectEvent, className }: VolunteerOpportunityMapProps) {
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+export default function VolunteerOpportunityMap({
+  events,
+  activeEventId,
+  onSelectEvent,
+  userLocation,
+  radiusKm,
+  isRadiusFilterEnabled,
+  locationRequestKey,
+  onUserLocationChange,
+  onLocationStatusChange,
+  className
+}: VolunteerOpportunityMapProps) {
+  const [locationStatus, setLocationStatus] = useState<VolunteerMapLocationStatus>("idle");
   const eventsWithLocation = events.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
+
+  const handleLocationStatusChange = (status: VolunteerMapLocationStatus) => {
+    setLocationStatus(status);
+    onLocationStatusChange?.(status);
+  };
 
   const firstEvent = eventsWithLocation[0] ?? events[0] ?? null;
   const center: [number, number] = [firstEvent?.lat ?? DEFAULT_CENTER[0], firstEvent?.lng ?? DEFAULT_CENTER[1]];
@@ -92,12 +132,38 @@ export default function VolunteerOpportunityMap({ events, activeEventId, onSelec
 
       <div className="h-full min-h-[26rem] overflow-hidden rounded-[1.5rem] border border-white/60 shadow-[0_30px_70px_rgba(20,33,46,0.14)] map-shell">
         <MapContainer center={center} zoom={12} scrollWheelZoom className="h-full w-full min-h-[26rem]">
-          <CenterMapOnCurrentLocation onStatusChange={setLocationStatus} />
+          <CenterMapOnCurrentLocation
+            onStatusChange={handleLocationStatusChange}
+            onLocationChange={onUserLocationChange}
+            locationRequestKey={locationRequestKey}
+          />
 
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
+          {userLocation ? (
+            <>
+              {isRadiusFilterEnabled && radiusKm ? (
+                <Circle
+                  center={[userLocation.lat, userLocation.lng]}
+                  radius={radiusKm * 1000}
+                  pathOptions={{
+                    color: "#0b5d66",
+                    fillColor: "#0b5d66",
+                    fillOpacity: 0.1,
+                    weight: 2,
+                    dashArray: "8 6"
+                  }}
+                />
+              ) : null}
+              <Marker
+                position={[userLocation.lat, userLocation.lng]}
+                icon={buildVolunteerLocationIcon()}
+              />
+            </>
+          ) : null}
 
           {eventsWithLocation.map((event, index) => {
             const isActive = activeEventId === event.id;
@@ -123,4 +189,18 @@ export default function VolunteerOpportunityMap({ events, activeEventId, onSelec
       ) : null}
     </div>
   );
+}
+
+function buildVolunteerLocationIcon() {
+  return divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:20px;height:20px;">
+        <span style="position:absolute;inset:0;border-radius:999px;background:rgba(11,93,102,0.25);"></span>
+        <span style="position:absolute;left:4px;top:4px;width:12px;height:12px;border-radius:999px;background:#0b5d66;border:2px solid #ffffff;box-shadow:0 0 0 2px rgba(11,93,102,0.24);"></span>
+      </div>
+    `,
+    iconAnchor: [10, 10],
+    iconSize: [20, 20]
+  });
 }

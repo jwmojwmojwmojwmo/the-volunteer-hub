@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { APPLICATION_STATUSES } from "@/lib/application-status";
 import { cn } from "@/lib/utils";
 import type { EventCard, VolunteerProfile } from "@/types/volunteer";
+import type { VolunteerMapLocationStatus } from "./VolunteerOpportunityMap";
 
 const VolunteerOpportunityMap = dynamic(() => import("./VolunteerOpportunityMap"), {
   ssr: false,
@@ -23,6 +24,23 @@ type VolunteerEventBrowserProps = {
   profile: VolunteerProfile | null;
   applicationStatusByEvent: Map<string, string>;
 };
+
+type Coordinates = { lat: number; lng: number };
+
+function getDistanceInKm(a: Coordinates, b: Coordinates) {
+  const toRadians = (value: number) => value * (Math.PI / 180);
+  const earthRadiusKm = 6371;
+  const deltaLat = toRadians(b.lat - a.lat);
+  const deltaLng = toRadians(b.lng - a.lng);
+  const lat1 = toRadians(a.lat);
+  const lat2 = toRadians(b.lat);
+
+  const haversine = Math.sin(deltaLat / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+
+  const centralAngle = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  return earthRadiusKm * centralAngle;
+}
 
 function getRecommendedScore(event: EventCard, profile: VolunteerProfile | null) {
   if (!profile) {
@@ -66,6 +84,11 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   const [keyword, setKeyword] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState<SortOption>("recommended");
+  const [radiusKm, setRadiusKm] = useState(25);
+  const [isRadiusFilterEnabled, setIsRadiusFilterEnabled] = useState(false);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [locationStatus, setLocationStatus] = useState<VolunteerMapLocationStatus>("idle");
+  const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
 
@@ -84,13 +107,32 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   };
 
   const filteredEvents = useMemo(() => {
+    const normalizedKeyword = keyword.trim().toLowerCase();
+
     const matchingEvents = events.filter((event) => {
-      const searchContent = `${event.title} ${event.description} ${event.organizations?.name}`.toLowerCase();
-      const matchesKeyword = !keyword || searchContent.includes(keyword.toLowerCase());
+      const searchableFields = [
+        event.title,
+        event.description,
+        event.organizations?.name,
+        event.address,
+        ...(event.tags ?? [])
+      ]
+        .filter((value): value is string => Boolean(value && value.trim().length > 0))
+        .map((value) => value.toLowerCase());
+      const matchesKeyword = normalizedKeyword.length === 0
+        || searchableFields.some((field) => field.includes(normalizedKeyword));
 
       const matchesTags = selectedTags.length === 0 || selectedTags.every((tag) => event.tags.includes(tag));
 
-      return matchesKeyword && matchesTags;
+      const hasCoordinates = Number.isFinite(event.lat) && Number.isFinite(event.lng);
+      const eventDistance = userLocation && hasCoordinates
+        ? getDistanceInKm(userLocation, { lat: event.lat as number, lng: event.lng as number })
+        : null;
+      const matchesRadius = !isRadiusFilterEnabled
+        ? true
+        : Boolean(userLocation && eventDistance !== null && eventDistance <= radiusKm);
+
+      return matchesKeyword && matchesTags && matchesRadius;
     });
 
     switch (sortOption) {
@@ -126,7 +168,9 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
           return a.title.localeCompare(b.title);
         });
     }
-  }, [events, keyword, selectedTags, sortOption, profile]);
+  }, [events, keyword, selectedTags, sortOption, profile, isRadiusFilterEnabled, radiusKm, userLocation]);
+
+  const visibleMapEvents = filteredEvents;
 
   useEffect(() => {
     if (filteredEvents.length === 0) {
@@ -141,8 +185,8 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
     }
   }, [activeEventId, filteredEvents]);
 
-  const activeEvent = filteredEvents.find((event) => event.id === activeEventId) ?? filteredEvents[0] ?? null;
-  const eventsWithCoordinates = filteredEvents.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
+  const activeEvent = visibleMapEvents.find((event) => event.id === activeEventId) ?? visibleMapEvents[0] ?? null;
+  const eventsWithCoordinates = visibleMapEvents.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
   const activeEventApplicationStatus = activeEvent ? applicationStatusByEvent.get(activeEvent.id) ?? null : null;
   const activeEventPerks = activeEvent?.compensation ?? [];
   const activeCompensationLabel = activeEvent ? getCompensationLabel(activeEvent) : "No listed perks";
@@ -167,6 +211,8 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               setKeyword("");
               setSelectedTags([]);
               setSortOption("recommended");
+              setIsRadiusFilterEnabled(false);
+              setRadiusKm(25);
             }}
             className="secondary-action rounded-full px-3 py-2 text-xs font-semibold"
           >
@@ -241,6 +287,52 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               <option value="hours-desc">{getSortLabel("hours-desc")}</option>
               <option value="newest">{getSortLabel("newest")}</option>
             </select>
+          </div>
+
+          <div className="rounded-[1.1rem] border border-slate-200 bg-white/80 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="radius-toggle" className="text-sm font-semibold text-slate-900">
+                Radius filter
+              </label>
+              <input
+                id="radius-toggle"
+                type="checkbox"
+                checked={isRadiusFilterEnabled}
+                onChange={(event) => setIsRadiusFilterEnabled(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+              />
+            </div>
+
+            <div className="mt-3">
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+                <span>Search radius</span>
+                <span>{radiusKm} km</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={100}
+                step={1}
+                value={radiusKm}
+                onChange={(event) => setRadiusKm(Number(event.target.value))}
+                disabled={!isRadiusFilterEnabled}
+                className="w-full accent-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            <p className="mt-2 text-xs text-slate-600">
+              {userLocation
+                ? `Using your current location (${locationStatus === "granted" ? "detected" : "updated"}).`
+                : "Allow location access to filter nearby pins."}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setLocationRequestKey((previous) => previous + 1)}
+              className="mt-3 w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-slate-500"
+            >
+              Enable location access
+            </button>
           </div>
 
           {activeEvent ? (
@@ -331,9 +423,15 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
 
       <section className="relative z-0 h-full min-h-0 overflow-hidden">
         <VolunteerOpportunityMap
-          events={filteredEvents}
+          events={visibleMapEvents}
           activeEventId={activeEventId}
           onSelectEvent={openDetailsForEvent}
+          userLocation={userLocation}
+          radiusKm={radiusKm}
+          isRadiusFilterEnabled={isRadiusFilterEnabled}
+          locationRequestKey={locationRequestKey}
+          onUserLocationChange={setUserLocation}
+          onLocationStatusChange={setLocationStatus}
           className="h-full"
         />
 
