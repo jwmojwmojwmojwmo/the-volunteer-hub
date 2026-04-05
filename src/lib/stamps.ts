@@ -93,11 +93,11 @@ export const STAMP_LABELS: Record<(typeof STAMPS)[keyof typeof STAMPS], string> 
     [STAMPS.BILINGUAL]: "Bilingual / Multilingual",
     [STAMPS.HEAVY_LIFTING]: "Can lift 50+ lbs",
 
-    [STAMPS.HOURS_10]: "Bronze: 10 Hours",
-    [STAMPS.HOURS_40]: "Silver: 40 Hours",
-    [STAMPS.HOURS_100]: "Gold: 100 Hours",
-    [STAMPS.HOURS_250]: "Platinum: 250 Hours",
-    [STAMPS.HOURS_500]: "Diamond: 500 Hours",
+    [STAMPS.HOURS_10]: "10 Hours Completed",
+    [STAMPS.HOURS_40]: "40 Hours Completed",
+    [STAMPS.HOURS_100]: "100 Hours Completed",
+    [STAMPS.HOURS_250]: "250 Hours Completed",
+    [STAMPS.HOURS_500]: "500 Hours Completed",
 
     [STAMPS.EVENTS_1]: "First Event Completed",
     [STAMPS.EVENTS_5]: "5 Events Completed",

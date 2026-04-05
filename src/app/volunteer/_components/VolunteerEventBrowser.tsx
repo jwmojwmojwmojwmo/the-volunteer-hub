@@ -26,7 +26,6 @@ type VolunteerEventBrowserProps = {
   isSignedIn: boolean;
   profile: VolunteerProfile | null;
   applicationStatusByEvent: Map<string, string>;
-  userEmail?: string;
 };
 
 type Coordinates = { lat: number; lng: number };
@@ -88,7 +87,7 @@ function getSkillLabel(skill: string) {
   return STAMP_LABELS[skill as keyof typeof STAMP_LABELS] || skill;
 }
 
-export default function VolunteerEventBrowser({ events, isSignedIn, profile, applicationStatusByEvent, userEmail }: VolunteerEventBrowserProps) {
+export default function VolunteerEventBrowser({ events, isSignedIn, profile, applicationStatusByEvent }: VolunteerEventBrowserProps) {
   const [keyword, setKeyword] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("recommended");
@@ -99,8 +98,6 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
   const [locationRequestKey, setLocationRequestKey] = useState(0);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false);
-
-  const loggedInIdentity = profile?.name || userEmail || "Volunteer account";
 
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(e.target.value);
@@ -179,9 +176,15 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
       return;
     }
 
+    if (!activeEventId) {
+      setActiveEventId(filteredEvents[0].id);
+      return;
+    }
+
     const selectedStillVisible = filteredEvents.some((event) => event.id === activeEventId);
     if (!selectedStillVisible) {
-      setActiveEventId(filteredEvents[0].id);
+      setActiveEventId(null);
+      setIsDetailsPanelOpen(false);
     }
   }, [activeEventId, filteredEvents]);
 
@@ -231,47 +234,34 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
     setIsDetailsPanelOpen(true);
   };
 
+  const handleReset = () => {
+    setKeyword("");
+    setSortOption("recommended");
+    setIsRadiusFilterEnabled(false);
+    setRadiusKm(25);
+    setUserLocation(null);
+    setLocationStatus("idle");
+    setActiveEventId(null);
+    setIsDetailsPanelOpen(false);
+    setIsSearchFocused(false);
+  };
+
   return (
     <div className="relative z-10 grid h-full min-h-0 gap-4 overflow-hidden lg:grid-cols-[380px_minmax(0,1fr)] xl:gap-6">
       <aside className="paper-panel-strong flex h-full min-h-0 flex-col overflow-visible rounded-[1.75rem] p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-950/88">
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 dark:border-slate-700">
           <div className="min-w-0">
-            <p className="kicker">Logged in as</p>
-            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">{loggedInIdentity}</h3>
+            <p className="kicker">Opportunities</p>
+            <h3 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">Browse events</h3>
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Use search, filters, or the map to find opportunities.</p>
           </div>
           <button
             type="button"
-            onClick={() => {
-              setKeyword("");
-              setSortOption("recommended");
-              setIsRadiusFilterEnabled(false);
-              setRadiusKm(25);
-            }}
+            onClick={handleReset}
             className="secondary-action rounded-full px-3 py-2 text-xs font-semibold"
           >
             Reset
           </button>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
-          <div className="min-w-0 overflow-hidden rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Visible</p>
-            <p className="mt-1 break-words text-base font-semibold leading-tight text-slate-900 dark:text-slate-50">{filteredEvents.length}</p>
-          </div>
-          <div className="min-w-0 overflow-hidden rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Mapped</p>
-            <p className="mt-1 break-words text-base font-semibold leading-tight text-slate-900 dark:text-slate-50">{eventsWithCoordinates.length}</p>
-          </div>
-          <div className="min-w-0 overflow-hidden rounded-[1rem] border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/75">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Mode</p>
-            <p
-              title={getSortLabel(sortOption)}
-              className="mt-1 truncate text-[9px] font-semibold leading-none text-slate-900 dark:text-slate-50 sm:text-[11px]"
-            >
-              {getSortLabel(sortOption)}
-            </p>
-          </div>
         </div>
 
         <div className="mt-4 space-y-4 overflow-visible pr-1">
@@ -289,13 +279,13 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
               onChange={handleKeywordChange}
               className="input-shell"
             />
+            <p className="mt-2 text-xs font-medium text-slate-600 dark:text-slate-300">Click the search field to start viewing results.</p>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">Search by title, description, tags, skills, address, or organization.</p>
 
             {shouldShowSearchResults ? (
-              <div className="mt-3 rounded-[1.2rem] border border-slate-200 bg-white p-3 shadow-[0_20px_50px_rgba(20,33,46,0.18)] dark:border-slate-700 dark:bg-slate-950/92">
+              <div className="mt-3 rounded-[1.2rem] border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950/92">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2 dark:border-slate-700">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Search results</p>
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">Sorted by {getSortLabel(sortOption)}</p>
                 </div>
 
                 <div className="mt-3 max-h-[18rem] space-y-2 overflow-y-auto pr-1">
@@ -397,138 +387,6 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
             </button>
           </div>
 
-          {activeEvent ? (
-            <article className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 shadow-[0_16px_36px_rgba(20,33,46,0.08)] dark:border-slate-700 dark:bg-slate-950/88">
-              <p className="kicker">Picked</p>
-              <h4 className="mt-1 truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
-              {activeEvent.organizations?.id ? (
-                <Link
-                  href={`/organizations/${activeEvent.organizations.id}`}
-                  className="mt-1 inline-flex max-w-full items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 underline decoration-2 underline-offset-4 transition hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:text-slate-50"
-                  aria-label={`Open ${activeEvent.organizations.name || "organization"} review page`}
-                >
-                  {activeEvent.organizations.name || "Organization"}
-                </Link>
-              ) : null}
-              <div className="mt-3 grid grid-cols-2 gap-2 text-slate-900 dark:text-slate-50">
-                <div className="rounded-[0.95rem] bg-emerald-50 px-3 py-2 dark:bg-emerald-950/55">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Hours</p>
-                  <p className="text-base font-semibold">+{activeEvent.hours_given}h</p>
-                </div>
-                <div className="rounded-[0.95rem] bg-amber-50 px-3 py-2 dark:bg-amber-950/55">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">Perk</p>
-                  <p className="truncate text-sm font-semibold">{activeCompensationLabel}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsDetailsPanelOpen(true)}
-                  className="inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold"
-                >
-                  Open details
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveEventId(null);
-                    setIsDetailsPanelOpen(false);
-                  }}
-                  className="inline-flex rounded-full secondary-action px-4 py-2 text-sm font-semibold"
-                >
-                  Clear
-                </button>
-              </div>
-            </article>
-          ) : (
-            <div className="rounded-[1.35rem] border border-slate-200 bg-white/85 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950/88 dark:text-slate-300">
-              {filteredEvents.length === 0
-                ? "No events available right now."
-                : "Select a marker or event to load details here."}
-            </div>
-          )}
-
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">More events</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">Sorted by {getSortLabel(sortOption)}</p>
-            </div>
-
-            {filteredEvents.length > 0 ? (
-              <div className="space-y-2">
-                {filteredEvents.map((event) => (
-                  <button
-                    key={event.id}
-                    type="button"
-                    onClick={() => openDetailsForEvent(event.id)}
-                    className={cn(
-                      "w-full rounded-[1rem] border px-3 py-2 text-left transition",
-                      event.id === activeEventId
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white/85 text-slate-800 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-                    )}
-                  >
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold">
-                      <span className={cn("rounded-full px-2 py-1", event.id === activeEventId ? "bg-emerald-200 text-emerald-900" : "bg-emerald-100 text-emerald-800")}>
-                        +{event.hours_given}h
-                      </span>
-                      <span className={cn("max-w-[60%] truncate rounded-full px-2 py-1", event.id === activeEventId ? "bg-amber-200 text-amber-900" : "bg-amber-100 text-amber-800")}>
-                        {getCompensationLabel(event)}
-                      </span>
-                    </div>
-                    {event.skills_needed && event.skills_needed.length > 0 ? (
-                      <div className="mb-2 flex flex-wrap gap-1.5">
-                        {event.skills_needed.slice(0, 3).map((skill) => (
-                          <span
-                            key={skill}
-                            className={cn(
-                              "rounded-full px-2 py-1 text-[10px] font-semibold",
-                              event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            )}
-                          >
-                            {getSkillLabel(skill)}
-                          </span>
-                        ))}
-                        {event.skills_needed.length > 3 ? (
-                          <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold", event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100") }>
-                            +{event.skills_needed.length - 3} more
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {event.tags && event.tags.length > 0 ? (
-                      <div className="mb-2 flex flex-wrap gap-1.5">
-                        {event.tags.slice(0, 4).map((tag) => (
-                          <span
-                            key={tag}
-                            className={cn(
-                              "rounded-full px-2 py-1 text-[10px] font-semibold",
-                              event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                            )}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {event.tags.length > 4 ? (
-                          <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold", event.id === activeEventId ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-100") }>
-                            +{event.tags.length - 4} more
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <p className="truncate text-sm font-semibold">{event.title}</p>
-                    <p className={cn("mt-1 truncate text-xs", event.id === activeEventId ? "text-slate-100" : "text-slate-500 dark:text-slate-300") }>
-                      {event.organizations?.name || "Independent"}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-300">
-                None
-              </div>
-            )}
-          </div>
         </div>
       </aside>
 
@@ -547,20 +405,24 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
         />
 
         {activeEvent && isDetailsPanelOpen ? (
-          <aside className="pointer-events-auto absolute inset-y-4 left-4 z-[700] w-[min(30rem,calc(100%-2rem))] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(20,33,46,0.24)] dark:border-slate-700 dark:bg-slate-950 dark:shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+          <aside className="pointer-events-auto absolute inset-y-4 left-4 z-[1200] w-[min(30rem,calc(100%-2rem))] overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950">
             <div className="flex h-full min-h-0 flex-col">
               <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-slate-700">
                 <div className="min-w-0">
                   <p className="kicker">Event details</p>
                   <h4 className="display-font mt-1 break-words text-2xl font-semibold text-slate-900 dark:text-slate-50">{activeEvent.title}</h4>
                   {activeEvent.organizations?.id ? (
-                    <Link
-                      href={`/organizations/${activeEvent.organizations.id}`}
-                      className="mt-1 inline-flex max-w-full break-words text-sm font-semibold text-slate-700 underline decoration-2 underline-offset-4 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-slate-50"
-                      aria-label={`Open ${activeEvent.organizations.name || "organization"} review page`}
-                    >
-                      {activeEvent.organizations.name || "Organization"}
-                    </Link>
+                    <>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Company profile</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Click the company name to open its profile page.</p>
+                      <Link
+                        href={`/organizations/${activeEvent.organizations.id}`}
+                        className="mt-2 inline-flex max-w-full break-words text-sm font-semibold text-slate-700 underline decoration-2 underline-offset-4 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-slate-50"
+                        aria-label={`Open company profile for ${activeEvent.organizations.name || "organization"}`}
+                      >
+                        {activeEvent.organizations.name || "Organization"}
+                      </Link>
+                    </>
                   ) : (
                     <p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-300">Independent</p>
                   )}
@@ -595,7 +457,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                   </div>
                   <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Capacity</p>
-                    <p className="mt-1">{activeEvent.hours_given} hours, {activeEvent.max_volunteers} volunteers</p>
+                    <p className="mt-1">{activeEventAcceptedCount} / {activeEvent.max_volunteers} volunteers accepted</p>
                   </div>
                 </div>
 
@@ -613,9 +475,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                 <div className="rounded-[1rem] border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Application</p>
-                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                      Volunteers: {activeEventAcceptedCount} / {activeEvent.max_volunteers}
-                    </p>
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Open spots: {Math.max(activeEvent.max_volunteers - activeEventAcceptedCount, 0)}</p>
                   </div>
 
                   {isSignedIn ? (
@@ -626,7 +486,7 @@ export default function VolunteerEventBrowser({ events, isSignedIn, profile, app
                         className={cn(
                           "w-full rounded-full px-4 py-2 text-sm font-semibold transition",
                           canApplyToActiveEvent
-                            ? "primary-action hover:-translate-y-0.5"
+                            ? "primary-action"
                             : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                         )}
                       >

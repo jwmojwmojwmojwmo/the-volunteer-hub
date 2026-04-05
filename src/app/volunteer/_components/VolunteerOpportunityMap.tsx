@@ -2,7 +2,7 @@
 
 import { divIcon } from "leaflet";
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, ZoomControl } from "react-leaflet";
 import { Circle } from "react-leaflet";
 import type { EventCard } from "@/types/volunteer";
 
@@ -140,41 +140,43 @@ export default function VolunteerOpportunityMap({
   const [locationStatus, setLocationStatus] = useState<VolunteerMapLocationStatus>("idle");
   const [locationSettled, setLocationSettled] = useState(false);
   const eventsWithLocation = events.filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
+  const [mapCenter] = useState<[number, number]>(() => {
+    const firstEvent = eventsWithLocation[0] ?? events[0] ?? null;
+    return [firstEvent?.lat ?? DEFAULT_CENTER[0], firstEvent?.lng ?? DEFAULT_CENTER[1]];
+  });
 
   const handleLocationStatusChange = (status: VolunteerMapLocationStatus) => {
     setLocationStatus(status);
     onLocationStatusChange?.(status);
   };
 
-  const firstEvent = eventsWithLocation[0] ?? events[0] ?? null;
-  const center: [number, number] = [firstEvent?.lat ?? DEFAULT_CENTER[0], firstEvent?.lng ?? DEFAULT_CENTER[1]];
-
   return (
     <div className={`relative ${className ?? ""}`}>
-      <div className="absolute left-16 top-4 z-[500] flex flex-wrap gap-2">
-        <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-100">
-          {eventsWithLocation.length > 0 ? `${eventsWithLocation.length} mapped` : "No mapped events"}
+      <div className="absolute left-4 top-4 z-[900] flex max-w-[calc(100%-7rem)] flex-wrap gap-2">
+        <span className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-100">
+          {eventsWithLocation.length > 0 ? `${eventsWithLocation.length} results on map` : "No results on map"}
         </span>
         {locationStatus === "denied" ? (
-          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/55 dark:text-amber-200">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/55 dark:text-amber-200">
             Location blocked. Showing default area.
           </span>
         ) : null}
         {locationStatus === "unsupported" ? (
-          <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-200">
+          <span className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/88 dark:text-slate-200">
             Location unavailable in this browser.
           </span>
         ) : null}
       </div>
 
-      <div className="h-full min-h-[26rem] overflow-hidden rounded-[1.5rem] border border-white/60 shadow-[0_30px_70px_rgba(20,33,46,0.14)] map-shell">
-        <MapContainer center={center} zoom={12} scrollWheelZoom className="h-full w-full min-h-[26rem]">
+      <div className="h-full min-h-[26rem] overflow-hidden rounded-[1.5rem] border border-white/60 map-shell">
+        <MapContainer center={mapCenter} zoom={12} scrollWheelZoom zoomControl={false} className="h-full w-full min-h-[26rem]">
           <CenterMapOnCurrentLocation
             onStatusChange={handleLocationStatusChange}
             onLocationChange={onUserLocationChange}
             onLocationSettled={() => setLocationSettled(true)}
             locationRequestKey={locationRequestKey}
           />
+          <ZoomControl position="topright" />
           <FocusMapOnActiveEvent
             activeEventId={activeEventId}
             events={eventsWithLocation}
@@ -208,7 +210,7 @@ export default function VolunteerOpportunityMap({
             </>
           ) : null}
 
-          {eventsWithLocation.map((event, index) => {
+          {eventsWithLocation.map((event) => {
             const isActive = activeEventId === event.id;
 
             return (
@@ -226,7 +228,7 @@ export default function VolunteerOpportunityMap({
       </div>
 
       {events.length === 0 ? (
-        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-200 bg-white/92 px-4 py-3 text-sm font-semibold text-slate-700 shadow-md dark:border-slate-700 dark:bg-slate-900/92 dark:text-slate-100">
+        <div className="pointer-events-none absolute inset-x-8 bottom-8 z-[500] rounded-2xl border border-slate-200 bg-white/92 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/92 dark:text-slate-100">
           No events yet. The map is still ready and centered to your location when permission is allowed.
         </div>
       ) : null}

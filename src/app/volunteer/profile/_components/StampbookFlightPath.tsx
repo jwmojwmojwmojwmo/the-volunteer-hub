@@ -28,7 +28,7 @@ function milestonePoint(progress: number) {
 
 export default function StampbookFlightPath({ completedEvents, completedHours }: StampbookFlightPathProps) {
   const routeProgress = clamp(completedEvents / 12, 0, 1);
-  const plane = pointOnCurve(routeProgress);
+  const progressMarker = pointOnCurve(routeProgress);
   const firstStamp = milestonePoint(0.25);
   const secondStamp = milestonePoint(0.65);
   const thirdStamp = milestonePoint(1);
@@ -41,8 +41,8 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
     <section className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#fffdfa,#f5efe3)] p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="kicker">Flight path ledger</p>
-          <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Travel timeline</h2>
+          <p className="kicker">Progress ledger</p>
+          <h2 className="display-font mt-1 text-2xl font-semibold text-slate-900">Milestone timeline</h2>
         </div>
         <div className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
           {completedEvents} events completed
@@ -51,11 +51,11 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
 
       <div className="stampbook-route mt-4 overflow-hidden rounded-[1.5rem] border border-slate-200 p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-          <span>Departure</span>
-          <span>Master route</span>
+          <span>Start</span>
+          <span>Target</span>
         </div>
 
-        <svg viewBox="0 0 120 92" className="mt-3 h-64 w-full" role="img" aria-label="Volunteer flight path progress">
+        <svg viewBox="0 0 120 92" className="mt-3 h-64 w-full" role="img" aria-label="Volunteer milestone progress">
           <defs>
             <linearGradient id="pathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#0b5d66" />
@@ -98,9 +98,9 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
             <circle r="3.4" fill={thirdUnlocked ? "#ffffff" : "#c7cdd1"} />
           </g>
 
-          <g transform={`translate(${plane.x}, ${plane.y}) rotate(${routeProgress * 18 - 9})`}>
-            <circle r="5.5" fill="#fff" stroke="#14212e" strokeWidth="1" />
-            <text x="0" y="1.6" textAnchor="middle" fontSize="5.8" fill="#14212e">✈</text>
+          <g transform={`translate(${progressMarker.x}, ${progressMarker.y})`}>
+            <circle r="5.5" fill="#ffffff" stroke="#14212e" strokeWidth="1.2" />
+            <circle r="2.2" fill="#14212e" />
           </g>
 
           <text x="12" y="74" fill="#5f6b76" fontSize="4.6" fontWeight="700">
@@ -116,15 +116,15 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className={cn("rounded-[1.25rem] border p-4", firstUnlocked ? "border-slate-900 bg-white" : "border-slate-200 bg-white/70")}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">First destination</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">First milestone</p>
             <p className="mt-2 display-font text-lg font-semibold text-slate-900">1 event completed</p>
             <p className="mt-1 text-sm text-slate-600">
-              {firstUnlocked ? "Stamped and ready." : "Not yet stamped."}
+              {firstUnlocked ? "Milestone reached." : "Not reached yet."}
             </p>
           </div>
 
           <div className={cn("rounded-[1.25rem] border p-4", secondUnlocked ? "border-slate-900 bg-white" : "border-slate-200 bg-white/70")}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Mid route</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Midpoint milestone</p>
             <p className="mt-2 display-font text-lg font-semibold text-slate-900">5 events completed</p>
             <p className="mt-1 text-sm text-slate-600">
               {secondUnlocked ? "Unlocked." : `${Math.max(5 - completedEvents, 0)} more event${completedEvents === 4 ? "" : "s"} to go.`}
@@ -132,10 +132,10 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
           </div>
 
           <div className={cn("rounded-[1.25rem] border p-4", thirdUnlocked ? "border-slate-900 bg-white" : "border-slate-200 bg-white/70")}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Long-haul</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Advanced milestone</p>
             <p className="mt-2 display-font text-lg font-semibold text-slate-900">12 events completed</p>
             <p className="mt-1 text-sm text-slate-600">
-              {thirdUnlocked ? "Master route unlocked." : `${Math.max(12 - completedEvents, 0)} more to complete this route.`}
+              {thirdUnlocked ? "Milestone reached." : `${Math.max(12 - completedEvents, 0)} more to complete this milestone.`}
             </p>
           </div>
         </div>
@@ -143,8 +143,8 @@ export default function StampbookFlightPath({ completedEvents, completedHours }:
         <div className="mt-4 rounded-[1.25rem] border border-slate-200 bg-white/75 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Hours route</p>
-              <p className="mt-1 text-sm text-slate-600">A second track keeps long-term mileage visible without overwhelming the page.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Hours progress</p>
+              <p className="mt-1 text-sm text-slate-600">A second track keeps long-term totals visible without overwhelming the page.</p>
             </div>
             <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">
               {completedHours} hours logged

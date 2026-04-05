@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { applyToEvent } from "@/app/volunteer/actions";
+import VolunteerHeaderMenus from "@/app/volunteer/_components/VolunteerHeaderMenus";
+import ReloadButton from "@/components/ReloadButton";
 import { APPLICATION_STATUSES, getApplicationStatusLabel } from "@/lib/application-status";
 import { STAMP_LABELS } from "@/lib/stamps";
 
@@ -61,7 +63,7 @@ export default async function VolunteerEventDetailsPage({ params }: VolunteerEve
           <h1 className="text-xl font-semibold text-gray-900">Event not found</h1>
           <p className="mt-2 text-sm text-gray-600">This event might have been removed.</p>
           <Link href="/" className="mt-4 inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white">
-            Back to dashboard
+            Back to home
           </Link>
         </div>
       </main>
@@ -107,6 +109,13 @@ export default async function VolunteerEventDetailsPage({ params }: VolunteerEve
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-4xl space-y-6">
+        <section className="paper-panel rounded-[1.6rem] px-4 py-4 sm:px-5 sm:py-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <VolunteerHeaderMenus isSignedIn={Boolean(user)} />
+            <ReloadButton label="Refresh" />
+          </div>
+        </section>
+
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -203,7 +212,7 @@ export default async function VolunteerEventDetailsPage({ params }: VolunteerEve
             )}
 
             <Link href="/" className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900">
-              Back to dashboard
+              Back to home
             </Link>
           </div>
         </section>

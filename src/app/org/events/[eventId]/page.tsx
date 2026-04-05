@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { STAMP_LABELS } from "@/lib/stamps";
 import ReloadButton from "@/components/ReloadButton";
+import OrgHeaderNav from "@/app/org/_components/OrgHeaderNav";
 import { acceptApplication, declineApplication } from "../../actions";
 import { endOrganizationEvent } from "./actions";
 import AttendanceUpdateForm from "./AttendanceUpdateForm";
@@ -55,8 +56,8 @@ export default async function EventManagementPage({ params }: EventManagementPag
           <p className="kicker">Organization access</p>
           <h1 className="display-font mt-2 text-3xl font-semibold text-slate-900">Event not found</h1>
           <p className="mt-2 text-sm text-slate-600">This event does not belong to your organization, or it no longer exists.</p>
-          <Link href="/org" className="mt-4 inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
-            Back to dashboard
+          <Link href="/org/events" className="mt-4 inline-flex rounded-full primary-action px-4 py-2 text-sm font-semibold">
+            Back to events
           </Link>
         </div>
       </main>
@@ -104,6 +105,13 @@ export default async function EventManagementPage({ params }: EventManagementPag
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
+        <section className="paper-panel rounded-[1.6rem] px-4 py-4 sm:px-5 sm:py-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <OrgHeaderNav isSignedIn />
+            <ReloadButton label="Refresh event" />
+          </div>
+        </section>
+
         <section className="paper-panel rounded-[2rem] p-5 sm:p-7">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -117,10 +125,6 @@ export default async function EventManagementPage({ params }: EventManagementPag
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <ReloadButton label="Reload event" />
-              <Link href="/org" className="rounded-full secondary-action px-3 py-2 text-sm font-semibold">
-                Back to dashboard
-              </Link>
               {!isCompleted ? (
                 <form action={endOrganizationEvent}>
                   <input type="hidden" name="eventId" value={event.id} />
@@ -245,7 +249,7 @@ export default async function EventManagementPage({ params }: EventManagementPag
           <p className="mt-1 text-sm text-slate-600">Required skills and volunteer coverage: review which required skills this event asks for and which applicants currently match them.</p>
 
           <div className="mt-4 rounded-[1.15rem] border border-slate-200 bg-white/80 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Event required skills / stamps</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Event required skills</p>
             {requiredSkills.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {requiredSkills.map((skill: string) => (

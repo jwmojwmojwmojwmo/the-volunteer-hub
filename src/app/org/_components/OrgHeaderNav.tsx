@@ -4,22 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-type VolunteerHeaderMenusProps = {
+type OrgHeaderNavProps = {
   isSignedIn: boolean;
 };
 
 const NAV_ITEMS = [
-  { label: "Volunteer", href: "/" },
-  { label: "My Applications", href: "/volunteer/applications" },
-  { label: "Profile", href: "/volunteer/profile" }
+  { label: "My Events", href: "/org/events" },
+  { label: "Organization Profile", href: "/org/profile" }
 ] as const;
 
-export default function VolunteerHeaderMenus({ isSignedIn }: VolunteerHeaderMenusProps) {
+export default function OrgHeaderNav({ isSignedIn }: OrgHeaderNavProps) {
   const pathname = usePathname();
 
   if (!isSignedIn) {
     return (
-      <Link href="/login" className="primary-action rounded-full px-4 py-2 text-sm font-semibold">
+      <Link href="/org/login" className="primary-action rounded-full px-4 py-2 text-sm font-semibold">
         Log in
       </Link>
     );
@@ -28,7 +27,7 @@ export default function VolunteerHeaderMenus({ isSignedIn }: VolunteerHeaderMenu
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2">
       {NAV_ITEMS.map((item) => {
-        const isActive = pathname === item.href || (item.href === "/volunteer/profile" && pathname.startsWith("/volunteer/progression"));
+        const isActive = pathname === item.href || (item.href === "/org/profile" && pathname.startsWith("/organizations/"));
 
         return (
           <Link
@@ -37,9 +36,7 @@ export default function VolunteerHeaderMenus({ isSignedIn }: VolunteerHeaderMenu
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap min-w-[9.5rem] text-center",
-              isActive
-                ? "primary-action ring-2 ring-offset-1 ring-slate-900"
-                : "stamp-pill"
+              isActive ? "primary-action ring-2 ring-offset-1 ring-slate-900" : "stamp-pill"
             )}
           >
             {item.label}

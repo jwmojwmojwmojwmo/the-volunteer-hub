@@ -31,7 +31,7 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
-  const backHref = user?.id === orgId ? "/org" : "/";
+  const backHref = user?.id === orgId ? "/org/events" : "/";
 
   const { data: organization } = await supabase
     .from("organizations")
@@ -100,6 +100,11 @@ export default async function OrganizationProfilePage({ params }: OrganizationPr
             </div>
             <div className="flex items-center gap-2">
               <ReloadButton label="Reload profile" />
+              {user?.id === orgId ? (
+                <Link href="/org/profile/edit" className="rounded-full primary-action px-3 py-2 text-sm font-semibold">
+                  Edit profile
+                </Link>
+              ) : null}
               <Link href={backHref} className="rounded-full secondary-action px-3 py-2 text-sm font-semibold">
                 Back to events
               </Link>

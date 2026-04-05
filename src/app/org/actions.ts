@@ -121,6 +121,27 @@ export async function updateOrganizationProfileName(formData: FormData) {
   revalidatePath("/org");
 }
 
+export async function updateOrganizationProfileDetails(formData: FormData) {
+  const { supabase, user } = await requireOrganizationUser();
+  const name = getTrimmedField(formData, "name");
+  const contactEmail = getTrimmedField(formData, "contactEmail") || null;
+
+  const updates: { name?: string; contact_email?: string | null } = {};
+
+  if (name) {
+    updates.name = name;
+  }
+
+  updates.contact_email = contactEmail;
+
+  await supabase.from("organizations").update(updates).eq("id", user.id);
+
+  revalidatePath("/org");
+  revalidatePath("/org/profile");
+  revalidatePath(`/organizations/${user.id}`);
+  redirect("/org/profile");
+}
+
 export async function hideCompletedEventFromDashboard(formData: FormData) {
   const { supabase, user } = await requireOrganizationUser();
   const eventId = getTrimmedField(formData, "eventId");

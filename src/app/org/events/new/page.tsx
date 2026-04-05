@@ -35,8 +35,8 @@ export default async function NewOrganizationEventPage({ searchParams }: NewEven
             <p className="kicker">Create event</p>
             <h1 className="display-font mt-1 text-3xl font-semibold text-slate-900">Create New Event</h1>
           </div>
-          <Link href="/org" className="rounded-full secondary-action px-3 py-2 text-sm font-semibold text-slate-900">
-            Back to dashboard
+          <Link href="/org/events" className="rounded-full secondary-action px-3 py-2 text-sm font-semibold text-slate-900">
+            Back to events
           </Link>
         </div>
 

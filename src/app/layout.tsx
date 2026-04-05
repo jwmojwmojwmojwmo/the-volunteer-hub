@@ -16,7 +16,7 @@ const bodyFont = Atkinson_Hyperlegible({
 
 export const metadata: Metadata = {
   title: "YouCode 2026",
-  description: "Volunteer atlas and passport-style progression system for volunteers and organizations"
+  description: "Volunteer opportunities and progression tracking for volunteers and organizations"
 };
 
 export default function RootLayout({

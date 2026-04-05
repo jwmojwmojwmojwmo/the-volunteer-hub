@@ -69,18 +69,17 @@ export default function ThemeToggle() {
     applyTheme(nextTheme);
   };
 
-  const buttonLabel = theme === "dark" ? "Switch To Light Mode" : "Switch To Dark Mode";
+  const buttonLabel = theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      className="fixed bottom-4 right-4 z-[2000] rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 shadow-[0_14px_30px_rgba(20,33,46,0.2)] transition hover:-translate-y-0.5 hover:bg-white dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+      className="fixed bottom-4 left-4 z-[2000] rounded-full border-2 border-slate-500 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 transition dark:border-slate-500 dark:bg-slate-800 dark:text-slate-100"
       aria-label={buttonLabel}
       title={buttonLabel}
     >
-      <span>Switch To {theme === "dark" ? "Light" : "Dark"}</span>
-      <span className="ml-1 text-[0.78em] font-medium opacity-90">Mode</span>
+      Switch to {theme === "dark" ? "Light" : "Dark"} Mode
     </button>
   );
 }

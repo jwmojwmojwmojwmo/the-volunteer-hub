@@ -30,6 +30,7 @@ export async function requestSkillVerification(formData: FormData): Promise<void
 
   revalidatePath("/");
   revalidatePath("/volunteer/profile");
+  revalidatePath("/volunteer/progression");
 }
 
 export async function updateSelfDeclaredSkills(formData: FormData): Promise<void> {
@@ -59,6 +60,7 @@ export async function updateSelfDeclaredSkills(formData: FormData): Promise<void
   await supabase.from("volunteers").update({ skills: mergedSkills }).eq("id", data.user.id);
   revalidatePath("/");
   revalidatePath("/volunteer/profile");
+  revalidatePath("/volunteer/progression");
 }
 
 export async function updateProfileName(formData: FormData): Promise<void> {
@@ -78,6 +80,34 @@ export async function updateProfileName(formData: FormData): Promise<void> {
   await supabase.from("volunteers").update({ name }).eq("id", data.user.id);
   revalidatePath("/");
   revalidatePath("/volunteer/profile");
+  revalidatePath("/volunteer/progression");
+}
+
+export async function updateVolunteerProfileDetails(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user) {
+    redirect("/login");
+  }
+
+  const name = getTrimmedField(formData, "name");
+  const contactEmail = getTrimmedField(formData, "contactEmail") || null;
+
+  const updates: { name?: string; contact_email?: string | null } = {
+    contact_email: contactEmail
+  };
+
+  if (name) {
+    updates.name = name;
+  }
+
+  await supabase.from("volunteers").update(updates).eq("id", data.user.id);
+
+  revalidatePath("/");
+  revalidatePath("/volunteer/profile");
+  revalidatePath("/volunteer/progression");
+  redirect("/volunteer/profile");
 }
 
 export async function applyToEvent(eventId: string, _formData: FormData): Promise<void> {

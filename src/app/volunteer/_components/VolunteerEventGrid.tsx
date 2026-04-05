@@ -50,15 +50,20 @@ export default function VolunteerEventGrid({
               onClick={() => onSelectEvent?.(event.id)}
               onFocus={() => onSelectEvent?.(event.id)}
               className={cn(
-                "group relative flex flex-col overflow-hidden rounded-[1.6rem] border p-5 shadow-[0_18px_40px_rgba(20,33,46,0.08)] transition duration-300",
-                activeEventId === event.id ? "border-slate-900 bg-white" : "border-white/60 bg-white/82 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(20,33,46,0.12)]"
+                "group relative flex flex-col overflow-hidden rounded-[1.6rem] border p-5 transition duration-200",
+                activeEventId === event.id ? "border-slate-900 bg-white" : "border-slate-200 bg-white"
               )}
               onMouseEnter={() => onSelectEvent?.(event.id)}
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="kicker">
                   {event.organizations ? (
-                    <Link href={`/organizations/${event.organizations.id}`} className="underline underline-offset-4 hover:no-underline">
+                    <Link
+                      href={`/organizations/${event.organizations.id}`}
+                      className="underline underline-offset-4 hover:no-underline"
+                      aria-label={`Open company profile for ${event.organizations.name}`}
+                      title="Click the company name to open its profile"
+                    >
                       {event.organizations.name}
                     </Link>
                   ) : (
@@ -117,7 +122,7 @@ export default function VolunteerEventGrid({
                       aria-label={`Apply to ${event.title}`}
                       className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${
                         canApply
-                          ? "primary-action hover:-translate-y-0.5"
+                          ? "primary-action"
                           : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-500"
                       }`}
                     >
@@ -125,7 +130,7 @@ export default function VolunteerEventGrid({
                     </button>
                   </form>
                 ) : (
-                  <Link href="/login" className="rounded-full primary-action px-4 py-2 text-sm font-bold hover:-translate-y-0.5">
+                  <Link href="/login" className="rounded-full primary-action px-4 py-2 text-sm font-bold">
                     Log in to apply
                   </Link>
                 )}
